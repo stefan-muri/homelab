@@ -1,0 +1,82 @@
+---
+- name: Check if this node is already in a cluster
+  ansible.builtin.stat:
+    path: /var/lib/rancher/k3s/server/token
+  register: k3s_token_file
+
+- name: Work out the cluster state
+  ansible.builtin.set_fact:
+    k3s_existing_servers: "{{ ansible_play_hosts | map('extract', hostvars) | selectattr('k3s_token_file.stat.exists') | map(attribute='inventory_hostname') | list }}"
+
+- name: Pick the seed server
+  ansible.builtin.set_fact:
+    k3s_cluster_exists: "{{ k3s_existing_servers | length > 0}}"
+    k3s_seed: "{{ k3s_existing_servers | first | default(ansible_play_hosts | first) }}"
+
+- name: Show what Ansible decided
+  ansible.builtin.debug:
+    msg: "cluster exists: {{ k3s_cluster_exists }}, seed: {{ k3s_seed }}, already in: {{ k3s_existing_servers }}"
+  run_once: true
+
+- name: Create the k3s config directory
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    mode: "0755"
+
+- name: Write the k3s config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    mode: "0600"
+  notify: Restart k3s
+
+- name: Download the k3s install script
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/k3s-io/k3s/{{ k3s_version | urlencode }}/install.sh"
+    dest: /usr/local/bin/k3s-install.sh
+    mode: "0755"
+
+- name: Initialize the cluster on the seed
+  ansible.builtin.command:
+    cmd: /usr/local/bin/k3s-install.sh server --cluster-init
+    creates: /var/lib/rancher/k3s/server/token
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+  when:
+    - not k3s_cluster_exists
+    - inventory_hostname == k3s_seed
+
+- name: Wait for the seed's token
+  ansible.builtin.wait_for:
+    path: /var/lib/rancher/k3s/server/token
+  delegate_to: "{{ k3s_seed }}"
+  run_once: true
+
+- name: Read the cluster token from the seed
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/token
+  delegate_to: "{{ k3s_seed }}"
+  run_once: true
+  register: k3s_token
+  no_log: true
+
+- name: Join the cluster
+  ansible.builtin.command:
+    cmd: "/usr/local/bin/k3s-install.sh server --server https://{{ hostvars[k3s_seed].ansible_host }}:6443"
+    creates: /var/lib/rancher/k3s/server/token
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    K3S_TOKEN: "{{ k3s_token.content | b64decode | trim }}"
+  when: inventory_hostname != k3s_seed
+  throttle: 1
+  no_log: true
+
+- name: Wait until this node is Ready
+  ansible.builtin.command:
+    cmd: k3s kubectl wait --for=condition=Ready node/{{ inventory_hostname }} --timeout=30s
+  register: k3s_ready
+  until: k3s_ready.rc == 0
+  retries: 20
+  delay: 10
+  changed_when: false

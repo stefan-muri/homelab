@@ -1,0 +1,7 @@
+---
+- name: Restart k3s
+  ansible.builtin.systemd_service:
+    name: k3s
+    state: restarted
+  when: k3s_token_file.stat.exists
+  throttle: 1
