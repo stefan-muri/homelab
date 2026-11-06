@@ -1,0 +1,12 @@
+all:
+  children:
+    k3s:
+      hosts:
+        k3s-dojo:
+          ansible_host: 10.0.0.41
+        k3s-mojo:
+          ansible_host: 10.0.0.43
+        k3s-tojo:
+          ansible_host: 10.0.0.42
+      vars:
+        ansible_user: debian

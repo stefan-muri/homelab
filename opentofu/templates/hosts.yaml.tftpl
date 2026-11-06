@@ -1,0 +1,10 @@
+all:
+  children:
+    k3s:
+      hosts:
+%{ for name, ip in hosts ~}
+        ${name}:
+          ansible_host: ${ip}
+%{ endfor ~}
+      vars:
+        ansible_user: debian

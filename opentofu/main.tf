@@ -8,6 +8,8 @@ locals {
 
   }
 
+  k3s_hosts = { for k, v in local.k3s_nodes : "k3s-${k}" => v.ip }
+
 }
 resource "proxmox_virtual_environment_vm" "k3s" {
   for_each = local.k3s_nodes
@@ -60,7 +62,7 @@ resource "proxmox_virtual_environment_vm" "k3s" {
     }
   }
   agent {
-    enabled = false
+    enabled = true
   }
 
   operating_system {
