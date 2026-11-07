@@ -39,7 +39,7 @@ spec:
             fieldRef:
               fieldPath: spec.nodeName
         - name: vip_interface
-          value: eth0
+          value: {{ kube_vip_interface }}
         - name: vip_subnet
           value: "32"
         - name: dns_mode
@@ -50,6 +50,8 @@ spec:
           value: "true"
         - name: cp_namespace
           value: kube-system
+        - name: svc_enable
+          value: "true"
         - name: vip_leaderelection
           value: "true"
         - name: vip_leasename
@@ -61,10 +63,10 @@ spec:
         - name: vip_retryperiod
           value: "2"
         - name: address
-          value: 10.0.0.40
+          value: {{ k3s_api_vip }}
         - name: prometheus_server
           value: :2112
-        image: ghcr.io/kube-vip/kube-vip:v1.3.1
+        image: ghcr.io/kube-vip/kube-vip:{{ kube_vip_version }}
         imagePullPolicy: IfNotPresent
         name: kube-vip
         resources: {}
