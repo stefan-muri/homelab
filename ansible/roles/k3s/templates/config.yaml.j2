@@ -5,3 +5,8 @@ tls-san:
 {% for san in k3s_tls_san %}
   - {{ san }}
 {% endfor %}
+
+disable:
+{% for component in k3s_disable%}
+  - {{ component}}
+{% endfor %}
