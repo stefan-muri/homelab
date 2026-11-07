@@ -5,9 +5,18 @@ providers:
   kubernetesGateway:
     enabled: true
 
-gateway:
-  name: internal
-
 service:
   annotations:
     kube-vip.io/loadbalancerIPs: "10.0.0.45"
+
+gateway:
+  name: internal
+  listeners:
+    websecure:
+      port: 8443
+      protocol: HTTPS
+      hostname: "*.k8s.unterhaken.at"
+      namespacePolicy:
+        from: All
+      certificateRefs:
+        - name: wildcard-k8s-unterhaken-at-tls
