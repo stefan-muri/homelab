@@ -17,6 +17,9 @@ spec:
     - repoURL: https://github.com/stefan-muri/homelab.git
       targetRevision: main
       ref: values
+    - repoURL: https://github.com/stefan-muri/homelab.git
+      targetRevision: main
+      path: kubernetes/traefik/manifests
   destination:
     server: https://kubernetes.default.svc
     namespace: traefik
