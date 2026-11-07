@@ -1,2 +1,17 @@
 dex:
   enabled: false
+global:
+  domain: argocd.k8s.unterhaken.at
+configs:
+  params:
+    server.insecure: true
+
+server:
+  httproute:
+    enabled: true
+    parentRefs:
+      - name: internal
+        namespace: traefik
+        sectionName: websecure
+    hostnames:
+      - argocd.k8s.unterhaken.at
