@@ -1,0 +1,13 @@
+deployment:
+  replicas: 2
+
+providers:
+  kubernetesGateway:
+    enabled: true
+
+gateway:
+  name: internal
+
+service:
+  annotations:
+    kube-vip.io/loadbalancerIPs: "10.0.0.45"
