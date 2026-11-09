@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taxmirror
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: taxmirror
+  template:
+    metadata:
+      labels:
+        app: taxmirror
+    spec:
+      securityContext:
+        fsGroup: 65533
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: taxmirror
+      containers:
+        - name: nginx
+          image: nginxinc/nginx-unprivileged:1.31.7-alpine3.24
+          ports:
+            - name: http
+              containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: site
+              mountPath: /git
+              readOnly: true
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+              readOnly: true
+            - name: nginx-tmp
+              mountPath: /tmp
+        - name: git-sync
+          image: registry.k8s.io/git-sync/git-sync:v4.8.0
+          args:
+            - --repo=git@github.com:stefan-muri/TaxMirror.git
+            - --ref=web-dist
+            - --root=/git/repo
+            - --link=/git/site
+            - --period=2m
+            - --max-failures=5
+            - --git-gc=always
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: site
+              mountPath: /git
+            - name: deploy-key
+              mountPath: /etc/git-secret
+              readOnly: true
+            - name: git-sync-tmp
+              mountPath: /tmp
+      volumes:
+        - name: site
+          emptyDir:
+            sizeLimit: 256Mi
+        - name: nginx-conf
+          configMap:
+            name: taxmirror-nginx
+        - name: nginx-tmp
+          emptyDir: {}
+        - name: git-sync-tmp
+          emptyDir: {}
+        - name: deploy-key
+          secret:
+            secretName: git-deploy-key
+            defaultMode: 0400
