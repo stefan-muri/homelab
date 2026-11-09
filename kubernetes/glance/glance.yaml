@@ -36,6 +36,40 @@ pages:
                   </li>
                 {{ end }}
               </ul>
+          - type: custom-api
+            title: Healthchecks
+            title-url: https://healthchecks.io/
+            cache: 5m
+            url: https://healthchecks.io/api/v3/checks/
+            headers:
+              X-Api-Key: ${HC_API_KEY}
+            template: |
+              {{ $up := 0 }}{{ $late := 0 }}{{ $down := 0 }}
+              {{ range .JSON.Array "checks" }}
+                {{ $s := .String "status" }}
+                {{ if eq $s "up" }}{{ $up = add $up 1 }}{{ else if eq $s "grace" }}{{ $late = add $late 1 }}{{ else if eq $s "down" }}{{ $down = add $down 1 }}{{ end }}
+              {{ end }}
+              <div class="flex justify-between">
+                <span class="color-positive">{{ $up }} up</span>
+                <span class="{{ if gt $late 0 }}color-highlight{{ else }}color-subdue{{ end }}">{{ $late }} late</span>
+                <span class="{{ if gt $down 0 }}color-negative{{ else }}color-subdue{{ end }}">{{ $down }} down</span>
+              </div>
+              {{ if gt (add $late $down) 0 }}
+              <ul class="list list-gap-10 margin-top-10">
+                {{ range .JSON.Array "checks" }}
+                  {{ $s := .String "status" }}
+                  {{ if or (eq $s "grace") (eq $s "down") }}
+                    {{ $last := .String "last_ping" }}
+                    <li class="flex justify-between align-center gap-10">
+                      <span class="text-truncate min-width-0">{{ .String "name" }}</span>
+                      {{ if ne $last "" }}
+                        <span class="shrink-0 size-h6 {{ if eq $s "down" }}color-negative{{ else }}color-highlight{{ end }}" {{ $last | parseTime "rfc3339" | toRelativeTime }}></span>
+                      {{ end }}
+                    </li>
+                  {{ end }}
+                {{ end }}
+              </ul>
+              {{ end }}
 
           - type: weather
             location: Vienna, Austria
