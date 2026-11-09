@@ -2,9 +2,9 @@ locals {
   gateway = "10.0.0.138"
 
   k3s_nodes = {
-    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 6144, memory_min = 4096 }
-    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 4096, memory_min = 3072 }
-    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 3072, memory_min = 2048 }
+    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 6144}
+    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 4096}
+    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 3072}
 
   }
 
@@ -27,7 +27,7 @@ resource "proxmox_virtual_environment_vm" "k3s" {
 
   memory {
     dedicated = each.value.memory
-    floating  = each.value.memory_min
+    floating  = each.value.memory
   }
 
   disk {
