@@ -10,6 +10,12 @@ data "cloudflare_zone" "main" {
   }
 }
 
+data "cloudflare_zone" "taxmirror" {
+  filter = {
+    name = "taxmirror.eu"
+  }
+}
+
 resource "cloudflare_dns_record" "k8s_wildcard" {
   zone_id = data.cloudflare_zone.main.id
   name    = "*.k8s.${local.zone}"
