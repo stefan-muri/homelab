@@ -36,6 +36,7 @@ pages:
                   </li>
                 {{ end }}
               </ul>
+
           - type: custom-api
             title: Healthchecks
             title-url: https://healthchecks.io/
@@ -70,6 +71,13 @@ pages:
                 {{ end }}
               </ul>
               {{ end }}
+
+          - type: repository
+            repository: stefan-muri/homelab
+            cache: 30m
+            pull-requests-limit: 5
+            issues-limit: 3
+            commits-limit: 5
 
           - type: weather
             location: Vienna, Austria
