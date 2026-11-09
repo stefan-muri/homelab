@@ -57,8 +57,8 @@ spec:
           image: registry.k8s.io/git-sync/git-sync:v4.8.0
           args:
             - --repo=git@github.com:stefan-muri/daelite.git
-            - --root=/git
-            - --link=site
+            - --root=/git/repo
+            - --link=/git/site
             - --period=2m
             - --max-failures=5
           resources:
