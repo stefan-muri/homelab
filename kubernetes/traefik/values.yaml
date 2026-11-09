@@ -15,7 +15,7 @@ service:
 
 ports:
   public:
-    port: 8081
+    port: 8001
     exposedPort: 80
     expose:
       default: false
