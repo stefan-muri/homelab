@@ -18,6 +18,25 @@ pages:
                 url: http://10.0.0.9:27973
                 token: ${GLANCE_AGENT_TOKEN}
 
+          - type: custom-api
+            title: Argo CD
+            title-url: https://argocd.k8s.unterhaken.at
+            cache: 1m
+            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
+            headers:
+              Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+            template: |
+              <ul class="list list-gap-10">
+                {{ range .JSON.Array "items" }}
+                  {{ $sync := .String "status.sync.status" }}
+                  {{ $health := .String "status.health.status" }}
+                  <li class="flex justify-between align-center">
+                    <span class="color-highlight">{{ .String "metadata.name" }}</span>
+                    <span class="size-h6 {{ if and (eq $sync "Synced") (eq $health "Healthy") }}color-positive{{ else }}color-negative{{ end }}">{{ $sync }} · {{ $health }}</span>
+                  </li>
+                {{ end }}
+              </ul>
+
           - type: weather
             location: Vienna, Austria
             units: metric

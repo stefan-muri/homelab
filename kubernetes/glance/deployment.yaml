@@ -12,12 +12,17 @@ spec:
       labels:
         app: glance
     spec:
+      serviceAccountName: glance
       containers:
         - name: glance
           image: glanceapp/glance:v0.8.7
           env:
             - name: TZ
               value: Europe/Vienna
+            - name: KUBE_TOKEN_FILE
+              value: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - name: SSL_CERT_DIR
+              value: /etc/ssl/certs:/var/run/secrets/kubernetes.io/serviceaccount
           envFrom:
             - secretRef:
                 name: glance-env
