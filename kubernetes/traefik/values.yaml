@@ -8,6 +8,18 @@ providers:
 service:
   annotations:
     kube-vip.io/loadbalancerIPs: "10.0.0.45"
+  additionalServices:
+    public:
+      spec:
+        type: ClusterIP
+
+ports:
+  public:
+    port: 8081
+    exposedPort: 80
+    expose:
+      default: false
+      public: true
 
 gateway:
   name: internal
