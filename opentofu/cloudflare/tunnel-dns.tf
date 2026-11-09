@@ -6,6 +6,9 @@ locals {
     "home.unterhaken.at" = data.cloudflare_zone.main.id
     "taxmirror.eu"       = data.cloudflare_zone.taxmirror.id
     "www.taxmirror.eu"   = data.cloudflare_zone.taxmirror.id
+    "daelite.at"         = data.cloudflare_zone.daelite.id
+    "www.daelite.at"     = data.cloudflare_zone.daelite.id
+
   }
 }
 
@@ -28,4 +31,12 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["taxmirror.eu"]
   id = "f7a26c9caba70e6930eab6aae1948add/2d07e890980d4b1bab12e532c9641c13"
+}
+import {
+  to = cloudflare_dns_record.tunnel["daelite.at"]
+  id = "42408307f13c3c91e0fcb6836819ca03/e4db291f95ad6dfbdbda6cfd1f9a278d"
+}
+import {
+  to = cloudflare_dns_record.tunnel["www.daelite.at"]
+  id = "42408307f13c3c91e0fcb6836819ca03/86f57a1b3504bb1a1c053946923ec88d"
 }
