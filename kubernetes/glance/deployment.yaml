@@ -29,6 +29,11 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+          # Traefik needs a moment to stop routing to a terminating pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
           readinessProbe:
             httpGet:
               path: /api/healthz
