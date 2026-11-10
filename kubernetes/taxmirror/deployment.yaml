@@ -61,6 +61,8 @@ spec:
             - --root=/git/repo
             - --link=/git/site
             - --period=2m
+            - --init-period=10s
+            - --init-max-failures=30
             - --max-failures=5
             - --git-gc=always
           resources:
