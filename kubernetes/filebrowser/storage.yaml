@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-media
+spec:
+  capacity:
+    storage: 1Gi # required by the API, not enforced by NFS
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: filebrowser
+    name: media
+  mountOptions:
+    - nfsvers=4.2
+    - hard
+  nfs:
+    server: 10.0.0.8
+    path: /home/srv/media
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: filebrowser-downloads
+spec:
+  capacity:
+    storage: 1Gi # required by the API, not enforced by NFS
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: filebrowser
+    name: downloads
+  mountOptions:
+    - nfsvers=4.2
+    - hard
+  nfs:
+    server: 10.0.0.8
+    path: /home/srv/downloads
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+  annotations:
+    k8up.io/backup: "false"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: filebrowser-media
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: downloads
+  annotations:
+    k8up.io/backup: "false"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: filebrowser-downloads
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Users and settings (BoltDB), on the node's local disk. Never on NFS.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database
+  annotations:
+    # Deleting the Argo CD app must not delete the data with it.
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

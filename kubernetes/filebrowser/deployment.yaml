@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: filebrowser
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: filebrowser
+  template:
+    metadata:
+      labels:
+        app: filebrowser
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: filebrowser
+          image: filebrowser/filebrowser:v2.63.23
+          ports:
+            - name: http
+              containerPort: 8080
+          # Traefik needs a moment to stop routing to a terminating pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: database
+              mountPath: /database
+            - name: media
+              mountPath: /srv/media
+            - name: downloads
+              mountPath: /srv/downloads
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: config
+          configMap:
+            name: filebrowser-config
+        - name: database
+          persistentVolumeClaim:
+            claimName: database
+        - name: media
+          persistentVolumeClaim:
+            claimName: media
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: downloads
+        - name: tmp
+          emptyDir: {}
