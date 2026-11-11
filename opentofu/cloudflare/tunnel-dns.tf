@@ -3,12 +3,12 @@ locals {
 
   # Public hostnames served through the k3s tunnel, and the zone each one is in.
   tunnel_hostnames = {
-    "home.unterhaken.at" = data.cloudflare_zone.main.id
-    "taxmirror.eu"       = data.cloudflare_zone.taxmirror.id
-    "www.taxmirror.eu"   = data.cloudflare_zone.taxmirror.id
-    "daelite.at"         = data.cloudflare_zone.daelite.id
-    "www.daelite.at"     = data.cloudflare_zone.daelite.id
-
+    "home.unterhaken.at"  = data.cloudflare_zone.main.id
+    "taxmirror.eu"        = data.cloudflare_zone.taxmirror.id
+    "www.taxmirror.eu"    = data.cloudflare_zone.taxmirror.id
+    "daelite.at"          = data.cloudflare_zone.daelite.id
+    "www.daelite.at"      = data.cloudflare_zone.daelite.id
+    "books.unterhaken.at" = data.cloudflare_zone.main.id
   }
 }
 
@@ -39,4 +39,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["www.daelite.at"]
   id = "42408307f13c3c91e0fcb6836819ca03/86f57a1b3504bb1a1c053946923ec88d"
+}
+import {
+  to = cloudflare_dns_record.tunnel["books.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/eba56c1bd69f1098f9f221952f3b4cf9"
 }

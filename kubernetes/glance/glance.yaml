@@ -169,7 +169,7 @@ pages:
                 icon: si:pihole
               - title: Kavita
                 url: https://books.unterhaken.at
-                check-url: http://10.0.0.21:5000
+                check-url: http://kavita.kavita.svc.cluster.local/api/health
                 icon: sh:kavita-light
               - title: Argo CD
                 url: https://argocd.k8s.unterhaken.at
