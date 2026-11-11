@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 93.2.2
+      helm:
+        valueFiles:
+          - $values/kubernetes/kube-prometheus-stack/values.yaml
+    - repoURL: https://github.com/stefan-muri/homelab.git
+      targetRevision: main
+      ref: values
+    - repoURL: https://github.com/stefan-muri/homelab.git
+      targetRevision: main
+      path: kubernetes/kube-prometheus-stack/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
