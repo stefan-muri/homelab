@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: certificates
+spec:
+  groups:
+    - name: certificates
+      rules:
+        - alert: CertificateExpiresSoon
+          expr: max by (namespace, name) (certmanager_certificate_expiration_timestamp_seconds) - time() < 14 * 24 * 3600
+          for: 1h
+          labels:
+            severity: critical
+          annotations:
+            summary: Certificate {{ $labels.namespace }}/{{ $labels.name }} expires in {{ $value | humanizeDuration }}.
+        - alert: CertificateNotReady
+          expr: max by (namespace, name) (certmanager_certificate_ready_status{condition="True"}) == 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Certificate {{ $labels.namespace }}/{{ $labels.name }} has not been Ready for 15 minutes.

@@ -1,0 +1,28 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: argocd
+spec:
+  groups:
+    - name: argocd
+      rules:
+        - alert: ArgoCDAppDegraded
+          expr: max by (name) (argocd_app_info{health_status="Degraded"})
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: Argo CD app {{ $labels.name }} has been Degraded for 15 minutes.
+        - alert: ArgoCDAppOutOfSync
+          expr: max by (name) (argocd_app_info{sync_status="OutOfSync"})
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: Argo CD app {{ $labels.name }} has been OutOfSync for 30 minutes.
+        - alert: ArgoCDSyncFailed
+          expr: max by (name) (argocd_app_info{phase=~"Failed|Error"})
+          labels:
+            severity: warning
+          annotations:
+            summary: The last sync of Argo CD app {{ $labels.name }} failed.

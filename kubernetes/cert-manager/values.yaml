@@ -1,2 +1,8 @@
 crds:
   enabled: true
+
+prometheus:
+  servicemonitor:
+    enabled: true
+    # Keep the certificate's namespace instead of renaming it to exported_namespace.
+    honorLabels: true
