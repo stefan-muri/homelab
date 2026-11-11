@@ -1,0 +1,78 @@
+apiVersion: k8up.io/v1
+kind: Schedule
+metadata:
+  name: backup
+spec:
+  backend:
+    repoPasswordSecretRef:
+      name: backup-repo
+      key: repo-password
+    rest:
+      url: http://10.0.0.8:8000/k3s/
+      userSecretRef:
+        name: backup-repo
+        key: rest-user
+      passwordSecretReg:
+        name: backup-repo
+        key: rest-password
+  backup:
+    schedule: "40 3 * * *"
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+  prune:
+    schedule: "30 5 * * 0"
+    retention:
+      keepDaily: 14
+      keepWeekly: 8
+      keepMonthly: 6
+  check:
+    schedule: "30 6 * * 0"
+---
+apiVersion: k8up.io/v1
+kind: PreBackupPod
+metadata:
+  name: navidrome-db
+spec:
+  backupCommand: sqlite3 /data/navidrome.db .dump
+  fileExtension: .sql
+  pod:
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: navidrome
+          image: keinos/sqlite3:3.54.1
+          args: ["sleep", "infinity"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: navidrome-data
+---
+apiVersion: k8up.io/v1
+kind: PreBackupPod
+metadata:
+  name: kobser-db
+spec:
+  backupCommand: sqlite3 /data/kobser.db .dump
+  fileExtension: .sql
+  pod:
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: kobser
+          image: keinos/sqlite3:3.54.1
+          args: ["sleep", "infinity"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kobser-data

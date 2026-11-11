@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kobser
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kobser
+  template:
+    metadata:
+      labels:
+        app: kobser
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: kobser
+          image: ghcr.io/stefan-muri/kobser:sha-ac17135
+          env:
+            - name: NAVIDROME_URL
+              value: http://navidrome:4533
+            - name: MUSIC_DIR
+              value: /music
+            - name: YTDLP_COOKIES_FILE
+              value: /app/secrets/cookies.txt
+          ports:
+            - name: http
+              containerPort: 8000
+          # Traefik needs a moment to stop routing to a terminating pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+            - name: music
+              mountPath: /music
+            - name: cookies
+              mountPath: /app/secrets
+              readOnly: true
+            # yt-dlp's and ytmusicapi's caches, and the temporary copy of the
+            # cookies.
+            - name: home
+              mountPath: /home/app
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kobser-data
+        - name: music
+          persistentVolumeClaim:
+            claimName: music
+        - name: cookies
+          secret:
+            secretName: kobser-cookies
+        - name: home
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kobser
+spec:
+  selector:
+    app: kobser
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: navidrome
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: navidrome
+  template:
+    metadata:
+      labels:
+        app: navidrome
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: navidrome
+          image: deluan/navidrome:0.64.2
+          env:
+            - name: ND_LOGLEVEL
+              value: info
+            - name: ND_SESSIONTIMEOUT
+              value: 24h
+            # No scheduled scans: kobser triggers a scan after each download.
+            - name: ND_SCANSCHEDULE
+              value: "0"
+            - name: ND_ENABLEINSIGHTSCOLLECTOR
+              value: "false"
+            # Transcodes and resized artwork, rebuilt on demand.
+            - name: ND_CACHEFOLDER
+              value: /cache
+          ports:
+            - name: http
+              containerPort: 4533
+          # Traefik needs a moment to stop routing to a terminating pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: music
+              mountPath: /music
+              readOnly: true
+            - name: cache
+              mountPath: /cache
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: navidrome-data
+        - name: music
+          persistentVolumeClaim:
+            claimName: music
+        - name: cache
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: navidrome
+spec:
+  selector:
+    app: navidrome
+  ports:
+    - name: http
+      port: 4533
+      targetPort: http
