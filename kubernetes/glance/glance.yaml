@@ -146,7 +146,7 @@ pages:
                 icon: si:qbittorrent
               - title: File Browser
                 url: https://files.unterhaken.at
-                check-url: http://10.0.0.22:8080
+                check-url: http://filebrowser.filebrowser.svc.cluster.local/health
                 icon: sh:file-browser-light
               - title: Vaultwarden
                 url: https://vaultwarden.unterhaken.at

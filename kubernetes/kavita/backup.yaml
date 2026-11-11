@@ -17,6 +17,9 @@ spec:
         key: rest-password
   backup:
     schedule: "0 3 * * *"
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
   check:
     schedule: "0 5 * * 0"
   prune:
