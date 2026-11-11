@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  # 0 until the old data has been copied into the volume (step 11b).
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 127.0.0.1
+      initContainers:
+        # Sidecar: the other containers start once the tunnel is up and stop
+        # before it goes down.
+        - name: gluetun
+          image: qmcgaw/gluetun:v3.41.3
+          restartPolicy: Always
+          envFrom:
+            - secretRef:
+                name: mullvad
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: mullvad
+            - name: VPN_TYPE
+              value: wireguard
+            - name: SERVER_CITIES
+              value: Amsterdam
+            - name: FIREWALL_INPUT_PORTS
+              value: "8081"
+            - name: FIREWALL_OUTBOUND_SUBNETS
+              value: 10.42.0.0/16
+            - name: TZ
+              value: Europe/Vienna
+          startupProbe:
+            exec:
+              command: ["/gluetun-entrypoint", "healthcheck"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          volumeMounts:
+            - name: tun
+              mountPath: /dev/net/tun
+      containers:
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls484
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Vienna
+            - name: WEBUI_PORT
+              value: "8081"
+            - name: TORRENTING_PORT
+              value: "6881"
+          ports:
+            - name: http
+              containerPort: 8081
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            tcpSocket:
+              port: http
+          livenessProbe:
+            tcpSocket:
+              port: http
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+        # Only the tunnel lets traffic out, so a missing ping means the VPN is down.
+        - name: heartbeat
+          image: curlimages/curl:8.23.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              trap 'exit 0' TERM
+              while true; do
+                curl -fsS -m 10 --retry 3 -o /dev/null "$PING_URL"
+                sleep 300 & wait $!
+              done
+          env:
+            - name: PING_URL
+              valueFrom:
+                secretKeyRef:
+                  name: vpn-heartbeat
+                  key: url
+          resources:
+            requests:
+              cpu: 1m
+              memory: 8Mi
+            limits:
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: config
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: downloads
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
