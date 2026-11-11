@@ -101,10 +101,23 @@ alertmanager:
         telegram_configs:
           - bot_token_file: /etc/alertmanager/secrets/alertmanager-notify/telegram-token
             chat_id_file: /etc/alertmanager/secrets/alertmanager-notify/telegram-chat-id
+            message: '{{ template "telegram.message" . }}'
       - name: healthchecks
         webhook_configs:
           - url_file: /etc/alertmanager/secrets/alertmanager-notify/watchdog-url
             send_resolved: false
+  templateFiles:
+    telegram.tmpl: |-
+      {{ define "telegram.message" -}}
+      {{ if .Alerts.Firing -}}
+      <b>FIRING</b> {{ .GroupLabels.alertname }}{{ with .CommonLabels.severity }} · {{ . }}{{ end }}{{ with .GroupLabels.namespace }} · {{ . }}{{ end }}
+      {{ range .Alerts.Firing }}- {{ or .Annotations.description .Annotations.summary | html }}
+      {{ end }}{{ end -}}
+      {{ if .Alerts.Resolved -}}
+      <b>RESOLVED</b> {{ .GroupLabels.alertname }}{{ with .GroupLabels.namespace }} · {{ . }}{{ end }}
+      {{ range .Alerts.Resolved }}- {{ or .Annotations.description .Annotations.summary | html }}
+      {{ end }}{{ end -}}
+      {{ end }}
   alertmanagerSpec:
     secrets:
       - alertmanager-notify
