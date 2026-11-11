@@ -4,7 +4,7 @@ metadata:
   name: kavita
 spec:
   # 0 until the old config has been copied into the volume (step 3b).
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
