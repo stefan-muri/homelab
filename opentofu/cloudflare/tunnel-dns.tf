@@ -9,6 +9,8 @@ locals {
     "daelite.at"          = data.cloudflare_zone.daelite.id
     "www.daelite.at"      = data.cloudflare_zone.daelite.id
     "books.unterhaken.at" = data.cloudflare_zone.main.id
+    "files.unterhaken.at" = data.cloudflare_zone.main.id
+
   }
 }
 
@@ -43,4 +45,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["books.unterhaken.at"]
   id = "3faa991efaf6651816e062f3780c1d85/eba56c1bd69f1098f9f221952f3b4cf9"
+}
+import {
+  to = cloudflare_dns_record.tunnel["files.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/d3cfbf4767d4ec5f91db06539a98ed87"
 }
