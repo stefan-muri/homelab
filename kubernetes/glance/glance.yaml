@@ -162,9 +162,6 @@ pages:
                 url: https://git.unterhaken.at
                 check-url: http://10.0.0.10:3030
                 icon: si:gitea
-              - title: Portainer
-                url: http://10.0.0.10:9000
-                icon: si:portainer
               - title: Pi-Hole
                 url: http://10.0.0.11:8888/admin/login
                 icon: si:pihole
