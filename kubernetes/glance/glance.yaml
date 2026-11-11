@@ -139,7 +139,7 @@ pages:
               - title: Navidrome
                 url: https://navidrome.k8s.unterhaken.at
                 check-url: http://navidrome.kobser.svc.cluster.local:4533/ping
-                icon: si:navidrome
+                icon: sh:navidrome-light
                 alt-status-codes: [302]
               - title: qBittorrent
                 url: https://torrent.unterhaken.at
@@ -172,6 +172,10 @@ pages:
               - title: Argo CD
                 url: https://argocd.k8s.unterhaken.at
                 icon: si:argo
+              - title: Grafana
+                url: https://grafana.k8s.unterhaken.at
+                check-url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
+                icon: si:grafana
               # No icon available past this point.
               - title: Kobser
                 url: https://music.unterhaken.at
