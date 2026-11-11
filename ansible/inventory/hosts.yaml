@@ -10,3 +10,6 @@ all:
           ansible_host: 10.0.0.42
       vars:
         ansible_user: debian
+    gpu:
+      hosts:
+        k3s-tojo:
