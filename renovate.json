@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Vienna",
+  "schedule": ["before 7am on monday"],
+  "labels": ["updates"],
+  "prConcurrentLimit": 10,
+  "kubernetes": {
+    "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"]
+  },
+  "argocd": {
+    "managerFilePatterns": ["/^kubernetes/apps/.+\\.ya?ml$/"]
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^ansible/roles/k3s/defaults/main\\.yaml$/"],
+      "matchStrings": ["k3s_version: (?<currentValue>v\\S+)"],
+      "depNameTemplate": "k3s-io/k3s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^ansible/roles/k3s/defaults/main\\.yaml$/"],
+      "matchStrings": ["kube_vip_version: (?<currentValue>v\\S+)"],
+      "depNameTemplate": "ghcr.io/kube-vip/kube-vip",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchPackageNames": ["!ghcr.io/stefan-muri/kobser"],
+      "groupName": "routine updates"
+    },
+    {
+      "matchPackageNames": ["/^lscr\\.io/linuxserver//"],
+      "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?(?<compatibility>(?:ubu\\d+)?)(?:-r\\d+)?-ls(?<revision>\\d+)$"
+    },
+    {
+      "description": "kobser is built from its own repository. Its newest build goes live without review.",
+      "matchPackageNames": ["ghcr.io/stefan-muri/kobser"],
+      "schedule": ["at any time"],
+      "automerge": true,
+      "automergeType": "branch",
+      "ignoreTests": true
+    },
+    {
+      "description": "k3s supports upgrading one minor version at a time. Apply with ansible-playbook playbooks/k3s.yaml.",
+      "matchPackageNames": ["k3s-io/k3s"],
+      "matchUpdateTypes": ["minor", "major"],
+      "groupName": null,
+      "prBodyNotes": ["k3s: upgrade one minor version at a time, then run playbooks/k3s.yaml."]
+    }
+  ]
+}

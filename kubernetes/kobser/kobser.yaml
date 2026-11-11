@@ -19,7 +19,7 @@ spec:
         runAsGroup: 1000
       containers:
         - name: kobser
-          image: ghcr.io/stefan-muri/kobser:sha-ac17135
+          image: ghcr.io/stefan-muri/kobser:latest@sha256:12a5c17bfe36ff4047a6997c253df82b9c7caaa550dbfd680a437d8a129c45c7
           env:
             - name: NAVIDROME_URL
               value: http://navidrome:4533
