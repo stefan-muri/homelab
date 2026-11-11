@@ -3,13 +3,14 @@ locals {
 
   # Public hostnames served through the k3s tunnel, and the zone each one is in.
   tunnel_hostnames = {
-    "home.unterhaken.at"  = data.cloudflare_zone.main.id
-    "taxmirror.eu"        = data.cloudflare_zone.taxmirror.id
-    "www.taxmirror.eu"    = data.cloudflare_zone.taxmirror.id
-    "daelite.at"          = data.cloudflare_zone.daelite.id
-    "www.daelite.at"      = data.cloudflare_zone.daelite.id
-    "books.unterhaken.at" = data.cloudflare_zone.main.id
-    "files.unterhaken.at" = data.cloudflare_zone.main.id
+    "home.unterhaken.at"     = data.cloudflare_zone.main.id
+    "taxmirror.eu"           = data.cloudflare_zone.taxmirror.id
+    "www.taxmirror.eu"       = data.cloudflare_zone.taxmirror.id
+    "daelite.at"             = data.cloudflare_zone.daelite.id
+    "www.daelite.at"         = data.cloudflare_zone.daelite.id
+    "books.unterhaken.at"    = data.cloudflare_zone.main.id
+    "files.unterhaken.at"    = data.cloudflare_zone.main.id
+    "jellyfin.unterhaken.at" = data.cloudflare_zone.main.id
 
   }
 }
@@ -49,4 +50,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["files.unterhaken.at"]
   id = "3faa991efaf6651816e062f3780c1d85/d3cfbf4767d4ec5f91db06539a98ed87"
+}
+import {
+  to = cloudflare_dns_record.tunnel["jellyfin.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/a16992394315f7ff129ca9f6c48a5745"
 }
