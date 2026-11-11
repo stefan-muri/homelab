@@ -137,7 +137,8 @@ pages:
                 check-url: http://10.0.0.23:4444/status.php
                 icon: si:nextcloud
               - title: Navidrome
-                url: http://10.0.0.22:4533
+                url: https://navidrome.k8s.unterhaken.at
+                check-url: http://navidrome.kobser.svc.cluster.local:4533/ping
                 icon: si:navidrome
                 alt-status-codes: [302]
               - title: qBittorrent
@@ -177,7 +178,7 @@ pages:
               # No icon available past this point.
               - title: Kobser
                 url: https://music.unterhaken.at
-                check-url: http://10.0.0.22:4633
+                check-url: http://kobser.kobser.svc.cluster.local/health
               - title: DA ELITE
                 url: https://daelite.at
                 check-url: http://daelite.daelite.svc.cluster.local
