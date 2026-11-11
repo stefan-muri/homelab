@@ -8,6 +8,28 @@ kubeProxy:
 kubeEtcd:
   enabled: false
 
+# The same process also serves the API server's metrics on every endpoint, so
+# the kubelet repeats them and the API server adds histograms nothing here uses.
+# The first rule in each list is the chart's default: setting a list replaces it.
+kubelet:
+  serviceMonitor:
+    metricRelabelings:
+      - action: drop
+        sourceLabels: [__name__, le]
+        regex: (csi_operations|storage_operation_duration)_seconds_bucket;(0.25|2.5|15|25|120|600)(\.0)?
+      - action: drop
+        sourceLabels: [__name__]
+        regex: (apiserver|etcd|scheduler|workqueue|authentication|authorization|aggregator|apiextensions|watch_cache|field_validation|serviceaccount|node_authorizer|cardinality_enforcement|admission_quota_controller)_.*
+kubeApiServer:
+  serviceMonitor:
+    metricRelabelings:
+      - action: drop
+        sourceLabels: [__name__, le]
+        regex: (etcd_request|apiserver_request_slo|apiserver_request_sli|apiserver_request)_duration_seconds_bucket;(0\.15|0\.2|0\.3|0\.35|0\.4|0\.45|0\.6|0\.7|0\.8|0\.9|1\.25|1\.5|1\.75|2|3|3\.5|4|4\.5|6|7|8|9|15|20|40|45|50)(\.0)?
+      - action: drop
+        sourceLabels: [__name__]
+        regex: apiserver_(watch_.*|storage_list_duration_seconds|request_body_size_bytes|response_sizes)_bucket|etcd_request_duration_seconds_bucket|scheduler_.*_bucket
+
 defaultRules:
   rules:
     etcd: false
@@ -96,6 +118,9 @@ alertmanager:
 grafana:
   testFramework:
     enabled: false
+  sidecar:
+    datasources:
+      initDatasources: true
   admin:
     existingSecret: grafana-admin
   defaultDashboardsTimezone: Europe/Vienna
@@ -111,6 +136,6 @@ grafana:
   resources:
     requests:
       cpu: 20m
-      memory: 128Mi
+      memory: 256Mi
     limits:
-      memory: 384Mi
+      memory: 512Mi
