@@ -2,6 +2,8 @@
 - name: Base setup for the k3s nodes
   hosts: k3s
   become: true
+  # Reboot one node at a time
+  serial: 1
 
   tasks:
     - name: Upgrade all packages
@@ -16,8 +18,9 @@
           - qemu-guest-agent
           - kitty-terminfo
           - curl
+          - nfs-common
         state: present
-
+      tags: packages
     - name: Check whether an update needs a reboot
       ansible.builtin.stat:
         path: /var/run/reboot-required
