@@ -1,0 +1,17 @@
+# The same Jellyfin for devices at home: Traefik's internal gateway on the
+# LAN, so streams never leave the house. From outside, jellyfin.unterhaken.at.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: jellyfin-lan
+spec:
+  parentRefs:
+    - name: internal
+      namespace: traefik
+      sectionName: websecure
+  hostnames:
+    - jellyfin.k8s.unterhaken.at
+  rules:
+    - backendRefs:
+        - name: jellyfin
+          port: 80
