@@ -3,8 +3,7 @@ kind: Deployment
 metadata:
   name: qbittorrent
 spec:
-  # 0 until the old data has been copied into the volume (step 11b).
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
