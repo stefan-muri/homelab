@@ -25,6 +25,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: books
+  annotations:
+  # The books themselves are not backed up: replaceable, and on tojo already.
+    k8up.io/backup: "false"
 spec:
   accessModes:
     - ReadOnlyMany
