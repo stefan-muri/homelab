@@ -121,6 +121,7 @@ grafana:
   sidecar:
     datasources:
       initDatasources: true
+      watchMethod: LIST
   admin:
     existingSecret: grafana-admin
   defaultDashboardsTimezone: Europe/Vienna
