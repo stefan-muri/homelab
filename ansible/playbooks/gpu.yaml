@@ -1,0 +1,27 @@
+---
+- name: GPU nodes run the standard kernel
+  hosts: gpu
+  become: true
+  serial: 1
+
+  tasks:
+    - name: Install the standard kernel
+      ansible.builtin.apt:
+        name: linux-image-amd64
+        state: present
+        update_cache: true
+
+    - name: Allow removing the running kernel
+      ansible.builtin.debconf:
+        name: linux-base
+        question: linux-base/removing-running-kernel
+        vtype: boolean
+        value: "false"
+
+    - name: Remove the cloud kernel
+      ansible.builtin.apt:
+        name:
+          - linux-image-cloud-amd64
+          - linux-image-*-cloud-amd64
+        state: absent
+        purge: true

@@ -8,3 +8,8 @@ all:
 %{ endfor ~}
       vars:
         ansible_user: debian
+    gpu:
+      hosts:
+%{ for name in gpu_hosts ~}
+        ${name}:
+%{ endfor ~}

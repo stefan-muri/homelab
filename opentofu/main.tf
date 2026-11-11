@@ -2,15 +2,15 @@ locals {
   gateway = "10.0.0.138"
 
   k3s_nodes = {
-    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 6144}
-    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 4096}
-    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 3072}
-
+    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 6144, gvt = null }
+    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 4096, gvt = "i915-GVTg_V5_4" }
+    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 3072, gvt = null }
   }
 
   k3s_hosts = { for k, v in local.k3s_nodes : "k3s-${k}" => v.ip }
-
+  gpu_hosts = [for k, v in local.k3s_nodes : "k3s-${k}" if v.gvt != null]
 }
+
 resource "proxmox_virtual_environment_vm" "k3s" {
   for_each = local.k3s_nodes
 
@@ -41,9 +41,18 @@ resource "proxmox_virtual_environment_vm" "k3s" {
     bridge = "vmbr0"
   }
 
+  dynamic "hostpci" {
+    for_each = each.value.gvt == null ? [] : [each.value.gvt]
+    content {
+      device  = "hostpci0"
+      mapping = "igpu"
+      mdev    = hostpci.value
+      pcie    = false
+    }
+  }
+
   initialization {
     datastore_id = each.value.datastore
-
 
     ip_config {
       ipv4 {
@@ -61,6 +70,7 @@ resource "proxmox_virtual_environment_vm" "k3s" {
       keys     = [trimspace(file(pathexpand(var.ssh_public_key_file)))]
     }
   }
+
   agent {
     enabled = true
   }
@@ -68,5 +78,6 @@ resource "proxmox_virtual_environment_vm" "k3s" {
   operating_system {
     type = "l26"
   }
+
   serial_device {}
 }
