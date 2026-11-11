@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+        - name: jellyfin
+          image: lscr.io/linuxserver/jellyfin:10.11.11ubu2604-ls47
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: Europe/Vienna
+          ports:
+            - name: http
+              containerPort: 8096
+          # Traefik needs a moment to stop routing to a terminating pod.
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+              gpu.intel.com/i915: 1
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: cache
+              mountPath: /config/cache
+            - name: transcodes
+              mountPath: /config/data/transcodes
+            - name: media
+              mountPath: /data/tvshows
+              subPath: tvseries
+              readOnly: true
+            - name: media
+              mountPath: /data/movies
+              subPath: movies
+              readOnly: true
+            - name: media
+              mountPath: /data/music
+              subPath: music
+              readOnly: true
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: config
+        - name: cache
+          persistentVolumeClaim:
+            claimName: cache
+        - name: transcodes
+          emptyDir:
+            sizeLimit: 10Gi
+        - name: media
+          persistentVolumeClaim:
+            claimName: media
+            readOnly: true
