@@ -143,7 +143,7 @@ pages:
                 alt-status-codes: [302]
               - title: qBittorrent
                 url: https://torrent.unterhaken.at
-                check-url: http://10.0.0.21:8081
+                check-url: http://qbittorrent.qbittorrent.svc.cluster.local
                 icon: si:qbittorrent
               - title: File Browser
                 url: https://files.unterhaken.at
