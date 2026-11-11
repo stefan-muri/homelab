@@ -53,8 +53,6 @@ spec:
               mountPath: /config
             - name: cache
               mountPath: /config/cache
-            - name: transcodes
-              mountPath: /config/data/transcodes
             - name: media
               mountPath: /data/tvshows
               subPath: tvseries
@@ -74,9 +72,6 @@ spec:
         - name: cache
           persistentVolumeClaim:
             claimName: cache
-        - name: transcodes
-          emptyDir:
-            sizeLimit: 10Gi
         - name: media
           persistentVolumeClaim:
             claimName: media
