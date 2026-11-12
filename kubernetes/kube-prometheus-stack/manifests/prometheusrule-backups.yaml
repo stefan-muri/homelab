@@ -16,3 +16,15 @@ spec:
             severity: critical
           annotations:
             summary: A k8up {{ $labels.jobType }} job in {{ $labels.namespace }} failed.
+        - alert: K8upBackupMissing
+          # Jobs owned by a Backup, except the one that only runs the database dump.
+          expr: |
+            time() - max by (namespace) (
+              kube_job_status_completion_time
+              * on (namespace, job_name)
+              kube_job_owner{owner_kind="Backup", job_name!~".+-prebackup"}
+            ) > 26 * 3600
+          labels:
+            severity: critical
+          annotations:
+            summary: The last backup in {{ $labels.namespace }} finished {{ $value | humanizeDuration }} ago.
