@@ -84,6 +84,7 @@ alertmanager:
   config:
     route:
       group_by: [alertname, namespace]
+      group_interval: 1m
       receiver: telegram
       routes:
         - receiver: healthchecks
@@ -110,14 +111,20 @@ alertmanager:
     telegram.tmpl: |-
       {{ define "telegram.message" -}}
       {{ if .Alerts.Firing -}}
-      <b>FIRING</b> {{ .GroupLabels.alertname }}{{ with .CommonLabels.severity }} · {{ . }}{{ end }}{{ with .GroupLabels.namespace }} · {{ . }}{{ end }}
-      {{ range .Alerts.Firing }}- {{ or .Annotations.description .Annotations.summary | html }}
+      🔴 <b>{{ .GroupLabels.alertname }}</b>{{ with .CommonLabels.severity }} · {{ . }}{{ end }}
+      {{ range .Alerts.Firing -}}
+      {{ template "telegram.text" (or .Annotations.description .Annotations.summary) }} <i>(since {{ .StartsAt | tz "Europe/Vienna" | date "15:04" }})</i>
       {{ end }}{{ end -}}
       {{ if .Alerts.Resolved -}}
-      <b>RESOLVED</b> {{ .GroupLabels.alertname }}{{ with .GroupLabels.namespace }} · {{ . }}{{ end }}
-      {{ range .Alerts.Resolved }}- {{ or .Annotations.description .Annotations.summary | html }}
+      ✅ <b>{{ .GroupLabels.alertname }}</b> resolved
+      {{ range .Alerts.Resolved -}}
+      {{ template "telegram.text" (or .Annotations.summary .Annotations.description) }} <i>({{ .StartsAt | tz "Europe/Vienna" | date "15:04" }}–{{ .EndsAt | tz "Europe/Vienna" | date "15:04" }}, {{ template "telegram.duration" (.EndsAt.Sub .StartsAt) }})</i>
       {{ end }}{{ end -}}
       {{ end }}
+
+      {{ define "telegram.text" }}{{ . | reReplaceAll "(?i) on cluster ([.\\s])" "${1}" | reReplaceAll "  +" " " | html }}{{ end }}
+
+      {{ define "telegram.duration" }}{{ if lt .Seconds 60.0 }}{{ .Round 1000000000 }}{{ else }}{{ .Round 60000000000 | printf "%s" | reReplaceAll "m0s$" "m" | reReplaceAll "h0m$" "h" }}{{ end }}{{ end }}
   alertmanagerSpec:
     secrets:
       - alertmanager-notify
