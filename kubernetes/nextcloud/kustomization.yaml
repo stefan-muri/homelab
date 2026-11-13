@@ -3,4 +3,12 @@ kind: Kustomization
 namespace: nextcloud
 resources:
   - database.yaml
+  - storage.yaml
+  - deployment.yaml
+  - service.yaml
+  - httproute-lan.yaml
   - sealedsecret-nextcloud-db.yaml
+configMapGenerator:
+  - name: nextcloud-config
+    files:
+      - k8s.config.php
