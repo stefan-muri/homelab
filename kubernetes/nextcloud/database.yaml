@@ -1,0 +1,42 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: nextcloud-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+  # A PDB on the only instance would block every node drain.
+  enablePDB: false
+  bootstrap:
+    initdb:
+      database: nextcloud
+      owner: nextcloud
+      secret:
+        name: nextcloud-db
+  storage:
+    storageClass: local-path
+    size: 2Gi
+  affinity:
+    nodeSelector:
+      kubernetes.io/hostname: k3s-dojo
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: nextcloud-db
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: nextcloud-db
+  podMetricsEndpoints:
+    - port: metrics
