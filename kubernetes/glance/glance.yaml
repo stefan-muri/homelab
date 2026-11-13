@@ -158,10 +158,6 @@ pages:
                 check-url: http://paperless.paperless.svc.cluster.local
                 icon: si:paperlessngx
                 alt-status-codes: [302]
-              - title: Gitea
-                url: https://git.unterhaken.at
-                check-url: http://10.0.0.10:3030
-                icon: si:gitea
               - title: Pi-Hole
                 url: http://10.0.0.11:8888/admin/login
                 icon: si:pihole
