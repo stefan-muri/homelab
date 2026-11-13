@@ -8,6 +8,7 @@ resources:
   - httproute.yaml
   - httproute-lan.yaml
   - backup.yaml
+  - sealedsecret-git-deploy-key.yaml
 configMapGenerator:
   - name: filebrowser-config
     files:

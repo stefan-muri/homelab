@@ -5,6 +5,7 @@ resources:
   - deployment.yaml
   - service.yaml
   - httproute.yaml
+  - sealedsecret-git-deploy-key.yaml
 configMapGenerator:
   - name: taxmirror-nginx
     files:
