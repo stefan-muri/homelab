@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless
+spec:
+  selector:
+    app: paperless
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-ftp
+  annotations:
+    kube-vip.io/loadbalancerIPs: "10.0.0.46"
+spec:
+  type: LoadBalancer
+  # loadBalancerSourceRanges does not apply to NodePorts.
+  allocateLoadBalancerNodePorts: false
+  loadBalancerSourceRanges:
+    - 10.0.0.101/32
+  selector:
+    app: paperless
+  ports:
+    - name: ftp
+      port: 21
+      targetPort: ftp
+    - name: pasv-30000
+      port: 30000
+    - name: pasv-30001
+      port: 30001
+    - name: pasv-30002
+      port: 30002
+    - name: pasv-30003
+      port: 30003
+    - name: pasv-30004
+      port: 30004
+    - name: pasv-30005
+      port: 30005
+    - name: pasv-30006
+      port: 30006
+    - name: pasv-30007
+      port: 30007
+    - name: pasv-30008
+      port: 30008
+    - name: pasv-30009
+      port: 30009
