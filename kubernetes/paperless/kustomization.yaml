@@ -7,5 +7,6 @@ resources:
   - service.yaml
   - httproute.yaml
   - httproute-lan.yaml
+  - backup.yaml
   - sealedsecret-paperless-env.yaml
   - sealedsecret-backup-repo.yaml
