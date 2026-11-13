@@ -8,4 +8,5 @@ resources:
   - httproute.yaml
   - httproute-lan.yaml
   - backup.yaml
-  - sealedsecret-git-deploy-key.yaml
+  - sealedsecret-backup-repo.yaml
+  - sealedsecret-kobser-cookies.yaml

@@ -8,4 +8,6 @@ resources:
   - httproute.yaml
   - httproute-lan.yaml
   - backup.yaml
-  - sealedsecret-git-deploy-key.yaml
+  - sealedsecret-backup-repo.yaml
+  - sealedsecret-mullvad.yaml
+  - sealedsecret-vpn-heartbeat.yaml
