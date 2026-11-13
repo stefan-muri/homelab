@@ -34,7 +34,7 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "digest"],
-      "matchPackageNames": ["!ghcr.io/stefan-muri/kobser"],
+      "matchPackageNames": ["!ghcr.io/kobsermusic/kobser"],
       "groupName": "routine updates"
     },
     {
@@ -43,7 +43,7 @@
     },
     {
       "description": "kobser is built from its own repository. Its newest build goes live without review.",
-      "matchPackageNames": ["ghcr.io/stefan-muri/kobser"],
+      "matchPackageNames": ["ghcr.io/kobsermusic/kobser"],
       "schedule": ["at any time"],
       "automerge": true,
       "automergeType": "branch",

@@ -39,7 +39,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC co
 | [Kavita](https://www.kavitareader.com) | E-book library |
 | [File Browser](https://filebrowser.org) | Web file manager for the media share |
 | [Jellyfin](https://jellyfin.org) | Media server with Intel Quick Sync transcoding |
-| [kobser](https://github.com/stefan-muri/kobser), [Navidrome](https://www.navidrome.org) | Music downloader and music streaming server |
+| [kobser](https://github.com/kobsermusic/kobser), [Navidrome](https://www.navidrome.org) | Music downloader and music streaming server |
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client, traffic routed through a [gluetun](https://github.com/qdm12/gluetun) WireGuard sidecar |
 
 ### GitOps
