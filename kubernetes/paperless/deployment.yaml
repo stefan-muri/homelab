@@ -14,6 +14,7 @@ spec:
       labels:
         app: paperless
     spec:
+      enableServiceLinks: false
       initContainers:
         - name: broker
           image: valkey/valkey:9.1.2-alpine
