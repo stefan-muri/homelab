@@ -42,6 +42,11 @@
       "versioning": "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:\\.(?<build>\\d+))?(?:_v[\\d.]+)?(?<compatibility>(?:ubu\\d+)?)(?:-r\\d+)?-ls(?<revision>\\d+)$"
     },
     {
+      "description": "pure-ftpd tags carry the Debian release: trixie-1.0.50.",
+      "matchPackageNames": ["stilliard/pure-ftpd"],
+      "versioning": "regex:^trixie-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    },
+    {
       "description": "kobser is built from its own repository. Its newest build goes live without review.",
       "matchPackageNames": ["ghcr.io/kobsermusic/kobser"],
       "schedule": ["at any time"],

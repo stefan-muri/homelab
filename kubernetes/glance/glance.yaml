@@ -87,11 +87,6 @@ pages:
           - type: calendar
             first-day-of-week: sunday
 
-          - type: dns-stats
-            service: pihole-v6
-            url: http://10.0.0.11:8888
-            password: ${PIHOLE_APP_PASSWORD}
-
           - type: rss
             limit: 10
             collapse-after: 3
@@ -158,9 +153,6 @@ pages:
                 check-url: http://paperless.paperless.svc.cluster.local
                 icon: si:paperlessngx
                 alt-status-codes: [302]
-              - title: Pi-Hole
-                url: http://10.0.0.11:8888/admin/login
-                icon: si:pihole
               - title: Kavita
                 url: https://books.unterhaken.at
                 check-url: http://kavita.kavita.svc.cluster.local/api/health
