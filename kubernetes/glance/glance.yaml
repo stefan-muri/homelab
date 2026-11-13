@@ -155,7 +155,7 @@ pages:
                 icon: si:vaultwarden
               - title: Paperless
                 url: https://docs.unterhaken.at
-                check-url: http://10.0.0.14:8000
+                check-url: http://paperless.paperless.svc.cluster.local
                 icon: si:paperlessngx
                 alt-status-codes: [302]
               - title: Gitea

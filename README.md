@@ -41,6 +41,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC co
 | [Jellyfin](https://jellyfin.org) | Media server with Intel Quick Sync transcoding |
 | [kobser](https://github.com/kobsermusic/kobser), [Navidrome](https://www.navidrome.org) | Music downloader and music streaming server |
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client, traffic routed through a [gluetun](https://github.com/qdm12/gluetun) WireGuard sidecar |
+| [Paperless-ngx](https://docs.paperless-ngx.com) | Document archive with OCR, scans arrive from the printer over FTP |
 
 ### GitOps
 
@@ -83,6 +84,7 @@ flowchart LR
 | 10.0.0.40 | Kubernetes API (kube-vip) |
 | 10.0.0.41-43 | k3s-dojo, k3s-tojo, k3s-mojo |
 | 10.0.0.45 | Traefik, gateway `internal` |
+| 10.0.0.46 | Paperless FTP, reachable from the printer only |
 
 Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 

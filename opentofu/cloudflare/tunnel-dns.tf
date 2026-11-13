@@ -13,6 +13,7 @@ locals {
     "jellyfin.unterhaken.at" = data.cloudflare_zone.main.id
     "music.unterhaken.at"    = data.cloudflare_zone.main.id
     "torrent.unterhaken.at"  = data.cloudflare_zone.main.id
+    "docs.unterhaken.at"     = data.cloudflare_zone.main.id
 
   }
 }
@@ -64,4 +65,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["torrent.unterhaken.at"]
   id = "3faa991efaf6651816e062f3780c1d85/f4bb7562cf215360baf47944fe71c2d0"
+}
+import {
+  to = cloudflare_dns_record.tunnel["docs.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/95079161a95fd6173bdb720776171761"
 }
