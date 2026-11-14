@@ -112,7 +112,7 @@ pages:
             sites:
               - title: Immich
                 url: https://photos.unterhaken.at
-                check-url: http://10.0.0.20:2283
+                check-url: http://immich-server.immich.svc.cluster.local:2283/api/server/ping
                 icon: si:immich
               - title: Jellyfin
                 url: https://jellyfin.unterhaken.at
