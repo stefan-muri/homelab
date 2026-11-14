@@ -3,19 +3,19 @@ locals {
 
   # Public hostnames served through the k3s tunnel, and the zone each one is in.
   tunnel_hostnames = {
-    "home.unterhaken.at"     = data.cloudflare_zone.main.id
-    "taxmirror.eu"           = data.cloudflare_zone.taxmirror.id
-    "www.taxmirror.eu"       = data.cloudflare_zone.taxmirror.id
-    "daelite.at"             = data.cloudflare_zone.daelite.id
-    "www.daelite.at"         = data.cloudflare_zone.daelite.id
-    "books.unterhaken.at"    = data.cloudflare_zone.main.id
-    "files.unterhaken.at"    = data.cloudflare_zone.main.id
-    "jellyfin.unterhaken.at" = data.cloudflare_zone.main.id
-    "music.unterhaken.at"    = data.cloudflare_zone.main.id
-    "torrent.unterhaken.at"  = data.cloudflare_zone.main.id
-    "docs.unterhaken.at"     = data.cloudflare_zone.main.id
-    "cloud.unterhaken.at"    = data.cloudflare_zone.main.id
-
+    "home.unterhaken.at"        = data.cloudflare_zone.main.id
+    "taxmirror.eu"              = data.cloudflare_zone.taxmirror.id
+    "www.taxmirror.eu"          = data.cloudflare_zone.taxmirror.id
+    "daelite.at"                = data.cloudflare_zone.daelite.id
+    "www.daelite.at"            = data.cloudflare_zone.daelite.id
+    "books.unterhaken.at"       = data.cloudflare_zone.main.id
+    "files.unterhaken.at"       = data.cloudflare_zone.main.id
+    "jellyfin.unterhaken.at"    = data.cloudflare_zone.main.id
+    "music.unterhaken.at"       = data.cloudflare_zone.main.id
+    "torrent.unterhaken.at"     = data.cloudflare_zone.main.id
+    "docs.unterhaken.at"        = data.cloudflare_zone.main.id
+    "cloud.unterhaken.at"       = data.cloudflare_zone.main.id
+    "vaultwarden.unterhaken.at" = data.cloudflare_zone.main.id
   }
 }
 
@@ -74,4 +74,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["cloud.unterhaken.at"]
   id = "3faa991efaf6651816e062f3780c1d85/e0d2cce00afce3691b786215498c21c3"
+}
+import {
+  to = cloudflare_dns_record.tunnel["vaultwarden.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/a9435bdbac3f23abb4e8c6d7a463e229"
 }

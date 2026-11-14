@@ -144,7 +144,7 @@ pages:
                 icon: sh:file-browser-light
               - title: Vaultwarden
                 url: https://vaultwarden.unterhaken.at
-                check-url: http://10.0.0.12:8081
+                check-url: http://vaultwarden.vaultwarden.svc.cluster.local/alive
                 icon: si:vaultwarden
               - title: Paperless
                 url: https://docs.unterhaken.at
