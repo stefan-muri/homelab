@@ -49,14 +49,10 @@ spec:
               sleep:
                 seconds: 5
           startupProbe:
-            httpGet:
-              path: /status.php
+            tcpSocket:
               port: http
-              httpHeaders:
-                - name: Host
-                  value: cloud.unterhaken.at
             periodSeconds: 10
-            failureThreshold: 30
+            failureThreshold: 60
           readinessProbe:
             httpGet:
               path: /status.php
@@ -64,13 +60,10 @@ spec:
               httpHeaders:
                 - name: Host
                   value: cloud.unterhaken.at
+            timeoutSeconds: 5
           livenessProbe:
-            httpGet:
-              path: /status.php
+            tcpSocket:
               port: http
-              httpHeaders:
-                - name: Host
-                  value: cloud.unterhaken.at
           resources:
             requests:
               cpu: 50m
