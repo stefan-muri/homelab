@@ -1,0 +1,451 @@
+- name: Cluster
+  width: wide
+  columns:
+    - size: full
+      widgets:
+        - type: split-column
+          widgets:
+            - type: custom-api
+              title: k3s nodes
+              cache: 30s
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: kube_node_info
+              subrequests:
+                ready:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: kube_node_status_condition{condition="Ready",status="true"}
+                pods:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: count by (node) (kube_pod_info{node!=""} * on (namespace, pod) group_left () (kube_pod_status_phase{phase="Running"} == 1))
+                boot:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: floor(node_boot_time_seconds * on (instance) group_left (nodename) node_uname_info)
+                cpu:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * (1 - avg by (nodename) (rate(node_cpu_seconds_total{mode="idle"}[2m]) * on (instance) group_left (nodename) node_uname_info)))
+                cpu15:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * (1 - avg by (nodename) (rate(node_cpu_seconds_total{mode="idle"}[15m]) * on (instance) group_left (nodename) node_uname_info)))
+                mem:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on (instance) group_left (nodename) node_uname_info)
+                mem-used:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round((node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 2^30, 0.1) * on (instance) group_left (nodename) node_uname_info
+                mem-total:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(node_memory_MemTotal_bytes / 2^30, 0.1) * on (instance) group_left (nodename) node_uname_info
+                disk:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * (1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * on (instance) group_left (nodename) node_uname_info)
+                disk-used:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round((node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_avail_bytes{mountpoint="/"}) / 2^30) * on (instance) group_left (nodename) node_uname_info
+                disk-total:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(node_filesystem_size_bytes{mountpoint="/"} / 2^30) * on (instance) group_left (nodename) node_uname_info
+                api-vip:
+                  url: https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/kube-system/leases/plndr-cp-lock
+                  headers:
+                    Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+                lan-vip:
+                  url: https://kubernetes.default.svc/apis/coordination.k8s.io/v1/namespaces/kube-system/leases/plndr-svcs-lock
+                  headers:
+                    Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+              template: |
+                {{ $ready := .Subrequest "ready" }}
+                {{ $pods := .Subrequest "pods" }}
+                {{ $boot := .Subrequest "boot" }}
+                {{ $cpu := .Subrequest "cpu" }}
+                {{ $cpu15 := .Subrequest "cpu15" }}
+                {{ $mem := .Subrequest "mem" }}
+                {{ $memUsed := .Subrequest "mem-used" }}
+                {{ $memTotal := .Subrequest "mem-total" }}
+                {{ $disk := .Subrequest "disk" }}
+                {{ $diskUsed := .Subrequest "disk-used" }}
+                {{ $diskTotal := .Subrequest "disk-total" }}
+                {{ $apiVip := (.Subrequest "api-vip").JSON.String "spec.holderIdentity" }}
+                {{ $lanVip := (.Subrequest "lan-vip").JSON.String "spec.holderIdentity" }}
+                {{ range sortByString "metric.internal_ip" "asc" (.JSON.Array "data.result") }}
+                  {{ $node := .String "metric.node" }}
+                  {{ $byNode := printf "data.result.#(metric.node==%q).value.1" $node }}
+                  {{ $byName := printf "data.result.#(metric.nodename==%q).value.1" $node }}
+                  {{ $isReady := eq ($ready.JSON.Int $byNode) 1 }}
+                  {{ $c := $cpu.JSON.Float $byName }}
+                  {{ $c15 := $cpu15.JSON.Float $byName }}
+                  {{ $m := $mem.JSON.Float $byName }}
+                  {{ $d := $disk.JSON.Float $byName }}
+                  <div class="server">
+                    <div class="server-info">
+                      <div class="server-details">
+                        <div class="flex items-center gap-7">
+                          <div class="server-name color-highlight size-h3">{{ $node }}</div>
+                          {{ if eq $apiVip $node }}<span class="badge" title="Holds the Kubernetes API address 10.0.0.40">API</span>{{ end }}
+                          {{ if eq $lanVip $node }}<span class="badge" title="Announces the LAN gateway addresses 10.0.0.45 and 10.0.0.46">LAN</span>{{ end }}
+                        </div>
+                        <div>
+                          {{ if $isReady }}<span {{ $boot.JSON.String $byName | parseRelativeTime "unix" }}></span> uptime · {{ $pods.JSON.Int $byNode }} pods{{ else }}<span class="color-negative">not ready</span>{{ end }}
+                        </div>
+                      </div>
+                      <div class="shrink-0" data-popover-type="html" data-popover-margin="0.2rem" data-popover-max-width="400px">
+                        <div data-popover-html>
+                          <div class="size-h5 text-compact">K3S</div>
+                          <div class="color-highlight">{{ .String "metric.kubelet_version" }}</div>
+                          <div class="size-h5 text-compact margin-top-10">KERNEL</div>
+                          <div class="color-highlight">{{ .String "metric.kernel_version" }}</div>
+                          <div class="size-h5 text-compact margin-top-10">ADDRESS</div>
+                          <div class="color-highlight">{{ .String "metric.internal_ip" }}</div>
+                        </div>
+                        <svg class="server-icon" stroke="var(--color-{{ if $isReady }}positive{{ else }}negative{{ end }})" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Zm-3 0h.008v.008h-.008v-.008Z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="server-stats">
+                      <div class="flex-1">
+                        <div class="flex items-end size-h5">
+                          <div>CPU</div>
+                          <div class="color-highlight margin-left-auto text-very-compact">{{ $c }} <span class="color-base">%</span></div>
+                        </div>
+                        <div data-popover-type="html">
+                          <div data-popover-html>
+                            <div class="flex">
+                              <div class="size-h5">2M AVG</div>
+                              <div class="value-separator"></div>
+                              <div class="color-highlight text-very-compact">{{ $c }} <span class="color-base size-h5">%</span></div>
+                            </div>
+                            <div class="flex margin-top-3">
+                              <div class="size-h5">15M AVG</div>
+                              <div class="value-separator"></div>
+                              <div class="color-highlight text-very-compact">{{ $c15 }} <span class="color-base size-h5">%</span></div>
+                            </div>
+                          </div>
+                          <div class="progress-bar progress-bar-combined">
+                            <div class="progress-value{{ if ge $c 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $c }}"></div>
+                            <div class="progress-value{{ if ge $c15 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $c15 }}"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <div class="flex justify-between items-end size-h5">
+                          <div>RAM</div>
+                          <div class="color-highlight text-very-compact">{{ $m }} <span class="color-base">%</span></div>
+                        </div>
+                        <div data-popover-type="html">
+                          <div data-popover-html>
+                            <div class="flex">
+                              <div class="size-h5">RAM</div>
+                              <div class="value-separator"></div>
+                              <div class="color-highlight text-very-compact">{{ $memUsed.JSON.Float $byName }} <span class="color-base size-h5">/</span> {{ $memTotal.JSON.Float $byName }} <span class="color-base size-h5">GiB</span></div>
+                            </div>
+                          </div>
+                          <div class="progress-bar progress-bar-combined">
+                            <div class="progress-value{{ if ge $m 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $m }}"></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <div class="flex justify-between items-end size-h5">
+                          <div>DISK</div>
+                          <div class="color-highlight text-very-compact">{{ $d }} <span class="color-base">%</span></div>
+                        </div>
+                        <div data-popover-type="html">
+                          <div data-popover-html>
+                            <div class="flex">
+                              <div class="size-h5">ROOT</div>
+                              <div class="value-separator"></div>
+                              <div class="color-highlight text-very-compact">{{ $diskUsed.JSON.Float $byName }} <span class="color-base size-h5">/</span> {{ $diskTotal.JSON.Float $byName }} <span class="color-base size-h5">GiB</span></div>
+                            </div>
+                          </div>
+                          <div class="progress-bar progress-bar-combined">
+                            <div class="progress-value{{ if ge $d 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $d }}"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {{ end }}
+
+            - type: server-stats
+              title: Proxmox hosts
+              servers:
+                - type: remote
+                  name: dojo
+                  url: http://10.0.0.7:27973
+                  token: ${GLANCE_AGENT_TOKEN}
+                - type: remote
+                  name: tojo
+                  url: http://10.0.0.8:27973
+                  token: ${GLANCE_AGENT_TOKEN}
+                - type: remote
+                  name: mojo
+                  url: http://10.0.0.9:27973
+                  token: ${GLANCE_AGENT_TOKEN}
+
+        - type: split-column
+          widgets:
+            - type: custom-api
+              title: Argo CD
+              title-url: https://argocd.k8s.unterhaken.at
+              cache: 1m
+              url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
+              headers:
+                Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+              template: |
+                {{ $apps := sortByString "metadata.name" "asc" (.JSON.Array "items") }}
+                {{ $bad := 0 }}
+                {{ range $apps }}{{ if not (and (eq (.String "status.sync.status") "Synced") (eq (.String "status.health.status") "Healthy")) }}{{ $bad = add $bad 1 }}{{ end }}{{ end }}
+                <div class="size-h5 margin-bottom-10">
+                  {{ if eq $bad 0 }}<span class="color-positive">{{ len $apps }} apps, all synced and healthy</span>{{ else }}<span class="color-negative">{{ $bad }} of {{ len $apps }} apps need attention</span>{{ end }}
+                </div>
+                <div class="tile-grid">
+                  {{ range $apps }}
+                    {{ $name := .String "metadata.name" }}
+                    {{ $sync := .String "status.sync.status" }}
+                    {{ $health := .String "status.health.status" }}
+                    {{ $ok := and (eq $sync "Synced") (eq $health "Healthy") }}
+                    <a class="flex items-center gap-10 min-width-0" href="https://argocd.k8s.unterhaken.at/applications/argocd/{{ $name }}" target="_blank" rel="noreferrer" title="{{ $sync }} · {{ $health }}">
+                      <span class="dot{{ if not $ok }}{{ if eq $health "Progressing" }} dot-warn{{ else }} dot-bad{{ end }}{{ end }}"></span>
+                      <span class="text-truncate {{ if $ok }}color-paragraph{{ else }}color-highlight{{ end }}">{{ $name }}</span>
+                      {{ if not $ok }}<span class="size-h6 margin-left-auto shrink-0 {{ if eq $health "Progressing" }}color-primary{{ else }}color-negative{{ end }}">{{ if ne $health "Healthy" }}{{ $health }}{{ else }}{{ $sync }}{{ end }}</span>{{ end }}
+                    </a>
+                  {{ end }}
+                </div>
+
+            - type: custom-api
+              title: Backups
+              cache: 5m
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: k8up_schedules_gauge
+              subrequests:
+                last:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: floor(max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}))
+                age:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
+                failed:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(sum by (exported_namespace) (increase(k8up_jobs_failed_counter{jobType="backup"}[24h])))
+              template: |
+                {{ $last := .Subrequest "last" }}
+                {{ $age := .Subrequest "age" }}
+                {{ $failed := .Subrequest "failed" }}
+                <div class="size-h5 margin-bottom-10">Nightly k8up snapshots to the REST server on tojo</div>
+                <ul class="list list-gap-8">
+                  {{ range sortByString "metric.exported_namespace" "asc" (.JSON.Array "data.result") }}
+                    {{ $ns := .String "metric.exported_namespace" }}
+                    {{ $q := printf "data.result.#(metric.namespace==%q).value.1" $ns }}
+                    {{ $ts := $last.JSON.String $q }}
+                    {{ $fails := $failed.JSON.Int (printf "data.result.#(metric.exported_namespace==%q).value.1" $ns) }}
+                    {{ $fresh := and (ne $ts "") (lt ($age.JSON.Float $q) 93600.0) }}
+                    <li class="flex items-center gap-10">
+                      <span class="dot{{ if eq $ts "" }} dot-idle{{ else if or (not $fresh) (gt $fails 0) }} dot-bad{{ end }}"></span>
+                      <span class="color-paragraph text-truncate min-width-0">{{ $ns }}</span>
+                      {{ if gt $fails 0 }}<span class="size-h6 color-negative shrink-0">{{ $fails }} failed</span>{{ end }}
+                      <span class="size-h6 margin-left-auto shrink-0 {{ if and (ne $ts "") (not $fresh) }}color-negative{{ else }}color-subdue{{ end }}">{{ if eq $ts "" }}pending{{ else }}<span {{ $ts | parseRelativeTime "unix" }}></span> ago{{ end }}</span>
+                    </li>
+                  {{ end }}
+                </ul>
+
+        - type: split-column
+          widgets:
+            - type: custom-api
+              title: Databases
+              cache: 1m
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: cnpg_collector_postgres_version
+              subrequests:
+                up:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: cnpg_collector_up
+                size:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(sum by (namespace) (cnpg_pg_database_size_bytes{datname!~"postgres|template.*"}) / 2^20)
+                connections:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: sum by (namespace) (cnpg_backends_total)
+                start:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: floor(max by (namespace) (cnpg_pg_postmaster_start_time))
+              template: |
+                {{ $up := .Subrequest "up" }}
+                {{ $size := .Subrequest "size" }}
+                {{ $connections := .Subrequest "connections" }}
+                {{ $start := .Subrequest "start" }}
+                <div class="size-h5 margin-bottom-10">CloudNativePG, one instance each on local-path</div>
+                <ul class="list list-gap-14">
+                  {{ range sortByString "metric.cluster" "asc" (.JSON.Array "data.result") }}
+                    {{ $q := printf "data.result.#(metric.namespace==%q).value.1" (.String "metric.namespace") }}
+                    {{ $isUp := eq ($up.JSON.Int $q) 1 }}
+                    <li>
+                      <div class="flex items-center gap-10">
+                        <span class="dot{{ if not $isUp }} dot-bad{{ end }}"></span>
+                        <span class="color-highlight">{{ .String "metric.cluster" }}</span>
+                        <span class="badge margin-left-auto">PG {{ .String "metric.full" }}</span>
+                      </div>
+                      <ul class="list-horizontal-text size-h6 margin-top-3 db-details">
+                        <li>{{ $size.JSON.Int $q | formatNumber }} MiB</li>
+                        {{ $conns := $connections.JSON.Int $q }}
+                        <li>{{ $conns }} {{ if eq $conns 1 }}connection{{ else }}connections{{ end }}</li>
+                        <li>up <span {{ $start.JSON.String $q | parseRelativeTime "unix" }}></span></li>
+                      </ul>
+                    </li>
+                  {{ end }}
+                </ul>
+
+            - type: custom-api
+              title: Memory by pod
+              cache: 1m
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: sort_desc(topk(10, round(sum by (namespace, pod) (container_memory_working_set_bytes{container!=""}) / 2^20)))
+              template: |
+                {{ $max := .JSON.Float "data.result.0.value.1" }}
+                <ul class="list list-gap-10">
+                  {{ range .JSON.Array "data.result" }}
+                    {{ $v := .Float "value.1" }}
+                    <li>
+                      <div class="flex items-center gap-10 size-h6">
+                        <span class="color-paragraph text-truncate min-width-0">{{ .String "metric.pod" | replaceMatches "-[bcdfghjklmnpqrstvwxz2456789]{8,10}-[bcdfghjklmnpqrstvwxz2456789]{5}$|-[bcdfghjklmnpqrstvwxz2456789]{5}$" "" | replaceAll "kube-prometheus-stack-" "" }}</span>
+                        <span class="color-subdue shrink-0">{{ .String "metric.namespace" }}</span>
+                        <span class="color-highlight margin-left-auto shrink-0">{{ $v }} MiB</span>
+                      </div>
+                      <div class="meter"><div style="--percent: {{ mul (div $v $max) 100 }}"></div></div>
+                    </li>
+                  {{ end }}
+                </ul>
+
+    - size: small
+      widgets:
+        - type: custom-api
+          title: Alerts
+          cache: 30s
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: ALERTS{alertname!~"Watchdog|InfoInhibitor"}
+          template: |
+            {{ $alerts := .JSON.Array "data.result" }}
+            {{ if eq (len $alerts) 0 }}
+              <div class="flex items-center gap-10">
+                <span class="dot"></span>
+                <span class="color-positive">All quiet</span>
+              </div>
+            {{ else }}
+              <ul class="list list-gap-10">
+                {{ range $alerts }}
+                  {{ $firing := eq (.String "metric.alertstate") "firing" }}
+                  <li>
+                    <div class="flex items-center gap-10">
+                      <span class="dot {{ if $firing }}dot-bad{{ else }}dot-warn{{ end }}"></span>
+                      <span class="color-highlight text-truncate min-width-0">{{ .String "metric.alertname" }}</span>
+                    </div>
+                    <div class="size-h6 color-subdue alert-details">{{ .String "metric.severity" }}{{ with .String "metric.namespace" }} · {{ . }}{{ end }}{{ if not $firing }} · pending{{ end }}</div>
+                  </li>
+                {{ end }}
+              </ul>
+            {{ end }}
+
+        - type: custom-api
+          title: Capacity
+          cache: 1m
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: >-
+              label_replace(round(100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])))), "stat", "cpu-used", "", "")
+              or label_replace(round(100 * sum(kube_pod_container_resource_requests{resource="cpu"} * on (namespace, pod) group_left () (kube_pod_status_phase{phase="Running"} == 1)) / sum(kube_node_status_allocatable{resource="cpu"})), "stat", "cpu-requested", "", "")
+              or label_replace(round(100 * sum(node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / sum(node_memory_MemTotal_bytes)), "stat", "mem-used", "", "")
+              or label_replace(round(100 * sum(kube_pod_container_resource_requests{resource="memory"} * on (namespace, pod) group_left () (kube_pod_status_phase{phase="Running"} == 1)) / sum(kube_node_status_allocatable{resource="memory"})), "stat", "mem-requested", "", "")
+          template: |
+            {{ $s := "data.result.#(metric.stat==%q).value.1" }}
+            {{ $cpuUsed := .JSON.Float (printf $s "cpu-used") }}
+            {{ $cpuRequested := .JSON.Float (printf $s "cpu-requested") }}
+            {{ $memUsed := .JSON.Float (printf $s "mem-used") }}
+            {{ $memRequested := .JSON.Float (printf $s "mem-requested") }}
+            <div class="flex flex-column gap-20">
+              <div>
+                <div class="flex justify-between items-end size-h5">
+                  <div>CPU</div>
+                  <div class="text-very-compact"><span class="color-highlight">{{ $cpuUsed }}</span> used · <span class="color-highlight">{{ $cpuRequested }}</span> requested</div>
+                </div>
+                <div class="progress-bar progress-bar-combined margin-top-5">
+                  <div class="progress-value{{ if ge $cpuUsed 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $cpuUsed }}"></div>
+                  <div class="progress-value{{ if ge $cpuRequested 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $cpuRequested }}"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between items-end size-h5">
+                  <div>RAM</div>
+                  <div class="text-very-compact"><span class="color-highlight">{{ $memUsed }}</span> used · <span class="color-highlight">{{ $memRequested }}</span> requested</div>
+                </div>
+                <div class="progress-bar progress-bar-combined margin-top-5">
+                  <div class="progress-value{{ if ge $memUsed 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $memUsed }}"></div>
+                  <div class="progress-value{{ if ge $memRequested 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $memRequested }}"></div>
+                </div>
+              </div>
+              <div class="size-h6 color-subdue">Percent of the whole cluster. The scheduler places pods by requests, not by use.</div>
+            </div>
+
+        - type: custom-api
+          title: Certificates
+          cache: 1h
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: floor((certmanager_certificate_expiration_timestamp_seconds - time()) / 86400)
+          template: |
+            <ul class="list list-gap-10">
+              {{ range sortByFloat "value.1" "asc" (.JSON.Array "data.result") }}
+                {{ $days := .Float "value.1" }}
+                <li class="flex items-center gap-10">
+                  <span class="dot{{ if lt $days 14.0 }} dot-bad{{ else if lt $days 30.0 }} dot-warn{{ end }}"></span>
+                  <span class="color-paragraph text-truncate min-width-0" title="{{ .String "metric.namespace" }}/{{ .String "metric.name" }}">{{ .String "metric.name" }}</span>
+                  <span class="size-h6 margin-left-auto shrink-0 {{ if lt $days 14.0 }}color-negative{{ else }}color-subdue{{ end }}">{{ $days }}d</span>
+                </li>
+              {{ end }}
+            </ul>
+
+        - type: custom-api
+          title: Restarts, 24h
+          cache: 5m
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: sort_desc(round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[24h]))) > 0)
+          template: |
+            {{ $pods := .JSON.Array "data.result" }}
+            {{ if eq (len $pods) 0 }}
+              <div class="flex items-center gap-10">
+                <span class="dot"></span>
+                <span class="color-positive">No restarts</span>
+              </div>
+            {{ else }}
+              <ul class="list list-gap-10">
+                {{ range $pods }}
+                  <li class="flex items-center gap-10 size-h6">
+                    <span class="color-paragraph text-truncate min-width-0" title="{{ .String "metric.namespace" }}/{{ .String "metric.pod" }}">{{ .String "metric.pod" | replaceMatches "-[bcdfghjklmnpqrstvwxz2456789]{8,10}-[bcdfghjklmnpqrstvwxz2456789]{5}$|-[bcdfghjklmnpqrstvwxz2456789]{5}$" "" }}</span>
+                    <span class="color-subdue shrink-0">{{ .String "metric.namespace" }}</span>
+                    <span class="color-highlight margin-left-auto shrink-0">{{ .String "value.1" }}×</span>
+                  </li>
+                {{ end }}
+              </ul>
+            {{ end }}

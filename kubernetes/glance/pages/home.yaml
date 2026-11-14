@@ -1,0 +1,259 @@
+- name: Home
+  head-widgets:
+    - type: search
+      search-engine: duckduckgo
+      placeholder: Search, or start with !gh !k8s !ah !dh !yt !r !w
+      bangs:
+        - title: GitHub
+          shortcut: "!gh"
+          url: https://github.com/search?q={QUERY}&type=repositories
+        - title: Kubernetes docs
+          shortcut: "!k8s"
+          url: https://kubernetes.io/search/?q={QUERY}
+        - title: Artifact Hub
+          shortcut: "!ah"
+          url: https://artifacthub.io/packages/search?ts_query_web={QUERY}
+        - title: Docker Hub
+          shortcut: "!dh"
+          url: https://hub.docker.com/search?q={QUERY}
+        - title: YouTube
+          shortcut: "!yt"
+          url: https://www.youtube.com/results?search_query={QUERY}
+        - title: Reddit
+          shortcut: "!r"
+          url: https://www.reddit.com/search?q={QUERY}
+        - title: Wikipedia
+          shortcut: "!w"
+          url: https://en.wikipedia.org/w/index.php?search={QUERY}
+
+  columns:
+    - size: small
+      widgets:
+        - type: clock
+          hour-format: 24h
+
+        - type: weather
+          location: Vienna, Austria
+          units: metric
+          hour-format: 24h
+
+        - type: calendar
+          first-day-of-week: sunday
+
+        - type: bookmarks
+          title: Admin
+          groups:
+            - title: Proxmox
+              links:
+                - title: dojo
+                  url: https://10.0.0.7:8006
+                  icon: si:proxmox
+                - title: tojo
+                  url: https://10.0.0.8:8006
+                  icon: si:proxmox
+                - title: mojo
+                  url: https://10.0.0.9:8006
+                  icon: si:proxmox
+            - title: Cloud
+              links:
+                - title: Cloudflare
+                  url: https://dash.cloudflare.com
+                  icon: si:cloudflare
+                - title: Healthchecks.io
+                  url: https://healthchecks.io/
+                  icon: sh:healthchecks
+                - title: Hetzner
+                  url: https://console.hetzner.com
+                  icon: si:hetzner
+            - title: Code
+              links:
+                - title: homelab
+                  url: https://github.com/stefan-muri/homelab
+                  icon: si:github
+                - title: murisato
+                  url: https://github.com/stefan-muri/murisato
+                  icon: si:github
+
+    - size: full
+      widgets:
+        # url is the public hostname where one exists, so a tile works from
+        # outside the LAN. check-url is the internal address, so the status
+        # reflects the service and not the tunnel.
+        - type: monitor
+          cache: 1m
+          title: Media
+          sites:
+            - title: Jellyfin
+              url: https://jellyfin.unterhaken.at
+              check-url: http://jellyfin.jellyfin.svc.cluster.local/health
+              icon: si:jellyfin
+              alt-status-codes: [302]
+            - title: Immich
+              url: https://photos.unterhaken.at
+              check-url: http://immich-server.immich.svc.cluster.local:2283/api/server/ping
+              icon: si:immich
+            - title: Navidrome
+              url: https://navidrome.k8s.unterhaken.at
+              check-url: http://navidrome.kobser.svc.cluster.local:4533/ping
+              icon: sh:navidrome-light
+              alt-status-codes: [302]
+            - title: Kobser
+              url: https://music.unterhaken.at
+              check-url: http://kobser.kobser.svc.cluster.local/health
+              icon: mdi:music-box-multiple
+            - title: Kavita
+              url: https://books.unterhaken.at
+              check-url: http://kavita.kavita.svc.cluster.local/api/health
+              icon: sh:kavita-light
+            - title: qBittorrent
+              url: https://torrent.unterhaken.at
+              check-url: http://qbittorrent.qbittorrent.svc.cluster.local
+              icon: si:qbittorrent
+            - title: File Browser
+              url: https://files.unterhaken.at
+              check-url: http://filebrowser.filebrowser.svc.cluster.local/health
+              icon: sh:file-browser-light
+
+        - type: monitor
+          cache: 1m
+          title: Cloud
+          sites:
+            - title: Nextcloud
+              url: https://cloud.unterhaken.at
+              check-url: http://nextcloud.nextcloud.svc.cluster.local/status.php
+              icon: si:nextcloud
+            - title: Integrac
+              url: https://integrac.unterhaken.at
+              check-url: http://nextcloud.integrac.svc.cluster.local/status.php
+              icon: si:nextcloud
+            - title: Paperless
+              url: https://docs.unterhaken.at
+              check-url: http://paperless.paperless.svc.cluster.local
+              icon: si:paperlessngx
+              alt-status-codes: [302]
+            - title: Vaultwarden
+              url: https://vaultwarden.unterhaken.at
+              check-url: http://vaultwarden.vaultwarden.svc.cluster.local/alive
+              icon: si:vaultwarden
+
+        - type: split-column
+          widgets:
+            - type: monitor
+              cache: 1m
+              title: Platform
+              sites:
+                - title: Argo CD
+                  url: https://argocd.k8s.unterhaken.at
+                  check-url: http://argocd-server.argocd.svc.cluster.local/healthz
+                  icon: si:argo
+                - title: Grafana
+                  url: https://grafana.k8s.unterhaken.at
+                  check-url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
+                  icon: si:grafana
+
+            - type: monitor
+              cache: 1m
+              title: Websites
+              sites:
+                - title: DA ELITE
+                  url: https://daelite.at
+                  check-url: http://daelite.daelite.svc.cluster.local
+                  icon: mdi:web
+                - title: TaxMirror
+                  url: https://taxmirror.eu
+                  check-url: http://taxmirror.taxmirror.svc.cluster.local
+                  icon: mdi:web
+                - title: ProClean
+                  url: https://www.procleangmbh.at
+                  check-url: http://proclean.proclean.svc.cluster.local
+                  icon: mdi:web
+
+    - size: small
+      widgets:
+        - type: custom-api
+          title: Cluster
+          title-url: /cluster
+          cache: 1m
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: >-
+              label_replace(count(kube_node_status_condition{condition="Ready",status="true"} == 1), "stat", "nodes-ready", "", "")
+              or label_replace(count(kube_node_info), "stat", "nodes", "", "")
+              or label_replace(count(kube_pod_status_phase{phase="Running"} == 1), "stat", "pods", "", "")
+              or label_replace(count(argocd_app_info{health_status="Healthy",sync_status="Synced"}), "stat", "apps-ok", "", "")
+              or label_replace(count(argocd_app_info), "stat", "apps", "", "")
+              or label_replace(count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}), "stat", "alerts", "", "")
+              or label_replace(count(time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}) < 93600), "stat", "backups-ok", "", "")
+              or label_replace(count(k8up_schedules_gauge), "stat", "backups", "", "")
+              or label_replace(floor(min(certmanager_certificate_expiration_timestamp_seconds - time()) / 86400), "stat", "tls-days", "", "")
+          template: |
+            {{ $s := "data.result.#(metric.stat==%q).value.1" }}
+            {{ $nodesReady := .JSON.Int (printf $s "nodes-ready") }}
+            {{ $nodes := .JSON.Int (printf $s "nodes") }}
+            {{ $appsOk := .JSON.Int (printf $s "apps-ok") }}
+            {{ $apps := .JSON.Int (printf $s "apps") }}
+            {{ $alerts := .JSON.Int (printf $s "alerts") }}
+            {{ $backupsOk := .JSON.Int (printf $s "backups-ok") }}
+            {{ $backups := .JSON.Int (printf $s "backups") }}
+            {{ $tlsDays := .JSON.Int (printf $s "tls-days") }}
+            <div class="stat-grid">
+              <div class="{{ if eq $nodesReady $nodes }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $nodesReady }}<small>/{{ $nodes }}</small></div>
+                <div class="stat-label">Nodes</div>
+              </div>
+              <div>
+                <div class="stat-value">{{ .JSON.Int (printf $s "pods") }}</div>
+                <div class="stat-label">Pods</div>
+              </div>
+              <div class="{{ if eq $appsOk $apps }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $appsOk }}<small>/{{ $apps }}</small></div>
+                <div class="stat-label">Apps</div>
+              </div>
+              <div class="{{ if eq $alerts 0 }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $alerts }}</div>
+                <div class="stat-label">Alerts</div>
+              </div>
+              <div class="{{ if eq $backupsOk $backups }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $backupsOk }}<small>/{{ $backups }}</small></div>
+                <div class="stat-label">Backups</div>
+              </div>
+              <div class="{{ if ge $tlsDays 14 }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $tlsDays }}<small>d</small></div>
+                <div class="stat-label">TLS</div>
+              </div>
+            </div>
+
+        - type: custom-api
+          title: Healthchecks
+          title-url: https://healthchecks.io/
+          cache: 5m
+          url: https://healthchecks.io/api/v3/checks/
+          headers:
+            X-Api-Key: ${HC_API_KEY}
+          template: |
+            {{ $up := 0 }}{{ $late := 0 }}{{ $down := 0 }}
+            {{ range .JSON.Array "checks" }}
+              {{ $s := .String "status" }}
+              {{ if eq $s "up" }}{{ $up = add $up 1 }}{{ else if eq $s "grace" }}{{ $late = add $late 1 }}{{ else if eq $s "down" }}{{ $down = add $down 1 }}{{ end }}
+            {{ end }}
+            <div class="flex justify-between">
+              <span class="color-positive">{{ $up }} up</span>
+              <span class="{{ if gt $late 0 }}color-highlight{{ else }}color-subdue{{ end }}">{{ $late }} late</span>
+              <span class="{{ if gt $down 0 }}color-negative{{ else }}color-subdue{{ end }}">{{ $down }} down</span>
+            </div>
+            {{ if gt (add $late $down) 0 }}
+            <ul class="list list-gap-10 margin-top-10">
+              {{ range .JSON.Array "checks" }}
+                {{ $s := .String "status" }}
+                {{ if or (eq $s "grace") (eq $s "down") }}
+                  {{ $last := .String "last_ping" }}
+                  <li class="flex justify-between align-center gap-10">
+                    <span class="text-truncate min-width-0">{{ .String "name" }}</span>
+                    {{ if ne $last "" }}
+                      <span class="shrink-0 size-h6 {{ if eq $s "down" }}color-negative{{ else }}color-highlight{{ end }}" {{ $last | parseTime "rfc3339" | toRelativeTime }}></span>
+                    {{ end }}
+                  </li>
+                {{ end }}
+              {{ end }}
+            </ul>
+            {{ end }}

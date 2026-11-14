@@ -36,7 +36,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs, dojo runs one 
 | Application | Purpose |
 |---|---|
 | Static websites | nginx with [git-sync](https://github.com/kubernetes/git-sync) |
-| [Glance](https://github.com/glanceapp/glance) | Dashboard |
+| [Glance](https://github.com/glanceapp/glance) | Dashboard with service status, cluster health from Prometheus and the Kubernetes API, and feeds |
 | [Kavita](https://www.kavitareader.com) | E-book library |
 | [File Browser](https://filebrowser.org) | Web file manager for the media share |
 | [Jellyfin](https://jellyfin.org) | Media server with Intel Quick Sync transcoding |

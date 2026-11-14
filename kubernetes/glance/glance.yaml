@@ -1,189 +1,48 @@
+server:
+  assets-path: /app/assets
+
+branding:
+  logo-text: ⎈
+  app-name: Homelab
+  hide-footer: true
+
+theme:
+  background-color: 222 22 9
+  primary-color: 190 80 62
+  positive-color: 155 60 52
+  negative-color: 352 80 66
+  contrast-multiplier: 1.2
+  text-saturation-multiplier: 0.5
+  custom-css-file: /assets/user.css
+  presets:
+    catppuccin-mocha:
+      background-color: 240 21 15
+      primary-color: 217 92 83
+      positive-color: 115 54 76
+      negative-color: 347 70 65
+      contrast-multiplier: 1.2
+    teal-city:
+      background-color: 225 14 15
+      primary-color: 157 47 65
+      contrast-multiplier: 1.1
+    tucan:
+      background-color: 50 1 6
+      primary-color: 24 97 58
+      negative-color: 209 88 54
+    gruvbox-dark:
+      background-color: 0 0 16
+      primary-color: 43 59 81
+      positive-color: 61 66 44
+      negative-color: 6 96 59
+    catppuccin-latte:
+      light: true
+      background-color: 220 23 95
+      primary-color: 220 91 54
+      positive-color: 109 58 40
+      negative-color: 347 87 44
+      contrast-multiplier: 1.0
+
 pages:
-  - name: Home
-    columns:
-      - size: small
-        widgets:
-          - type: server-stats
-            servers:
-              - type: remote
-                name: dojo
-                url: http://10.0.0.7:27973
-                token: ${GLANCE_AGENT_TOKEN}
-              - type: remote
-                name: tojo
-                url: http://10.0.0.8:27973
-                token: ${GLANCE_AGENT_TOKEN}
-              - type: remote
-                name: mojo
-                url: http://10.0.0.9:27973
-                token: ${GLANCE_AGENT_TOKEN}
-
-          - type: custom-api
-            title: Argo CD
-            title-url: https://argocd.k8s.unterhaken.at
-            cache: 1m
-            url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
-            headers:
-              Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
-            template: |
-              <ul class="list list-gap-10">
-                {{ range .JSON.Array "items" }}
-                  {{ $sync := .String "status.sync.status" }}
-                  {{ $health := .String "status.health.status" }}
-                  <li class="flex justify-between align-center">
-                    <span class="color-highlight">{{ .String "metadata.name" }}</span>
-                    <span class="size-h6 {{ if and (eq $sync "Synced") (eq $health "Healthy") }}color-positive{{ else }}color-negative{{ end }}">{{ $sync }} · {{ $health }}</span>
-                  </li>
-                {{ end }}
-              </ul>
-
-          - type: custom-api
-            title: Healthchecks
-            title-url: https://healthchecks.io/
-            cache: 5m
-            url: https://healthchecks.io/api/v3/checks/
-            headers:
-              X-Api-Key: ${HC_API_KEY}
-            template: |
-              {{ $up := 0 }}{{ $late := 0 }}{{ $down := 0 }}
-              {{ range .JSON.Array "checks" }}
-                {{ $s := .String "status" }}
-                {{ if eq $s "up" }}{{ $up = add $up 1 }}{{ else if eq $s "grace" }}{{ $late = add $late 1 }}{{ else if eq $s "down" }}{{ $down = add $down 1 }}{{ end }}
-              {{ end }}
-              <div class="flex justify-between">
-                <span class="color-positive">{{ $up }} up</span>
-                <span class="{{ if gt $late 0 }}color-highlight{{ else }}color-subdue{{ end }}">{{ $late }} late</span>
-                <span class="{{ if gt $down 0 }}color-negative{{ else }}color-subdue{{ end }}">{{ $down }} down</span>
-              </div>
-              {{ if gt (add $late $down) 0 }}
-              <ul class="list list-gap-10 margin-top-10">
-                {{ range .JSON.Array "checks" }}
-                  {{ $s := .String "status" }}
-                  {{ if or (eq $s "grace") (eq $s "down") }}
-                    {{ $last := .String "last_ping" }}
-                    <li class="flex justify-between align-center gap-10">
-                      <span class="text-truncate min-width-0">{{ .String "name" }}</span>
-                      {{ if ne $last "" }}
-                        <span class="shrink-0 size-h6 {{ if eq $s "down" }}color-negative{{ else }}color-highlight{{ end }}" {{ $last | parseTime "rfc3339" | toRelativeTime }}></span>
-                      {{ end }}
-                    </li>
-                  {{ end }}
-                {{ end }}
-              </ul>
-              {{ end }}
-
-          - type: repository
-            repository: stefan-muri/homelab
-            cache: 30m
-            pull-requests-limit: 5
-            issues-limit: 3
-            commits-limit: 5
-
-          - type: weather
-            location: Vienna, Austria
-            units: metric
-            hour-format: 24h
-
-          - type: calendar
-            first-day-of-week: sunday
-
-          - type: rss
-            limit: 10
-            collapse-after: 3
-            cache: 12h
-            feeds:
-              - url: https://selfh.st/rss/
-                title: selfh.st
-              - url: https://ciechanow.ski/atom.xml
-              - url: https://www.joshwcomeau.com/rss.xml
-                title: Josh Comeau
-              - url: https://samwho.dev/rss.xml
-              - url: https://ishadeed.com/feed.xml
-                title: Ahmad Shadeed
-
-      - size: full
-        widgets:
-          # url is the public hostname where one exists, so a tile works from
-          # outside the LAN. check-url is the internal address, so the status
-          # reflects the service and not the tunnel.
-          - type: monitor
-            cache: 1m
-            title: Services
-            sites:
-              - title: Immich
-                url: https://photos.unterhaken.at
-                check-url: http://immich-server.immich.svc.cluster.local:2283/api/server/ping
-                icon: si:immich
-              - title: Jellyfin
-                url: https://jellyfin.unterhaken.at
-                check-url: http://jellyfin.jellyfin.svc.cluster.local/health
-                icon: si:jellyfin
-                alt-status-codes: [302]
-              - title: Nextcloud
-                url: https://cloud.unterhaken.at
-                check-url: http://nextcloud.nextcloud.svc.cluster.local/status.php
-                icon: si:nextcloud
-              - title: Nextcloud (Integrac)
-                url: https://integrac.unterhaken.at
-                check-url: http://nextcloud.integrac.svc.cluster.local/status.php
-                icon: si:nextcloud
-              - title: Navidrome
-                url: https://navidrome.k8s.unterhaken.at
-                check-url: http://navidrome.kobser.svc.cluster.local:4533/ping
-                icon: sh:navidrome-light
-                alt-status-codes: [302]
-              - title: qBittorrent
-                url: https://torrent.unterhaken.at
-                check-url: http://qbittorrent.qbittorrent.svc.cluster.local
-                icon: si:qbittorrent
-              - title: File Browser
-                url: https://files.unterhaken.at
-                check-url: http://filebrowser.filebrowser.svc.cluster.local/health
-                icon: sh:file-browser-light
-              - title: Vaultwarden
-                url: https://vaultwarden.unterhaken.at
-                check-url: http://vaultwarden.vaultwarden.svc.cluster.local/alive
-                icon: si:vaultwarden
-              - title: Paperless
-                url: https://docs.unterhaken.at
-                check-url: http://paperless.paperless.svc.cluster.local
-                icon: si:paperlessngx
-                alt-status-codes: [302]
-              - title: Kavita
-                url: https://books.unterhaken.at
-                check-url: http://kavita.kavita.svc.cluster.local/api/health
-                icon: sh:kavita-light
-              - title: Argo CD
-                url: https://argocd.k8s.unterhaken.at
-                icon: si:argo
-              - title: Grafana
-                url: https://grafana.k8s.unterhaken.at
-                check-url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
-                icon: si:grafana
-              # No icon available past this point.
-              - title: Kobser
-                url: https://music.unterhaken.at
-                check-url: http://kobser.kobser.svc.cluster.local/health
-              - title: DA ELITE
-                url: https://daelite.at
-                check-url: http://daelite.daelite.svc.cluster.local
-              - title: TaxMirror
-                url: https://taxmirror.eu
-                check-url: http://taxmirror.taxmirror.svc.cluster.local
-              - title: ProClean
-                url: https://www.procleangmbh.at
-                check-url: http://proclean.proclean.svc.cluster.local
-
-          - type: group
-            widgets:
-              - type: hacker-news
-              - type: lobsters
-
-          - type: group
-            widgets:
-              - type: reddit
-                subreddit: technology
-                show-thumbnails: true
-              - type: reddit
-                subreddit: selfhosted
-                show-thumbnails: true
+  - $include: home.yaml
+  - $include: cluster.yaml
+  - $include: feeds.yaml

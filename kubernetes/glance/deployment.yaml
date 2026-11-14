@@ -21,6 +21,8 @@ spec:
               value: Europe/Vienna
             - name: KUBE_TOKEN_FILE
               value: /var/run/secrets/kubernetes.io/serviceaccount/token
+            - name: PROMETHEUS_URL
+              value: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
             - name: SSL_CERT_DIR
               value: /etc/ssl/certs:/var/run/secrets/kubernetes.io/serviceaccount
           envFrom:
@@ -60,7 +62,13 @@ spec:
             - name: config
               mountPath: /app/config
               readOnly: true
+            - name: assets
+              mountPath: /app/assets
+              readOnly: true
       volumes:
         - name: config
           configMap:
             name: glance-config
+        - name: assets
+          configMap:
+            name: glance-assets

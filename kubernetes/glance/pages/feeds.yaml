@@ -1,0 +1,88 @@
+- name: Feeds
+  columns:
+    - size: small
+      widgets:
+        - type: releases
+          title: App releases
+          cache: 6h
+          show-source-icon: true
+          limit: 10
+          collapse-after: 5
+          repositories:
+            - immich-app/immich
+            - jellyfin/jellyfin
+            - nextcloud/server
+            - dani-garcia/vaultwarden
+            - paperless-ngx/paperless-ngx
+            - navidrome/navidrome
+            - Kareadita/Kavita
+            - filebrowser/filebrowser
+            - qdm12/gluetun
+            - glanceapp/glance
+
+        - type: releases
+          title: Platform releases
+          cache: 6h
+          show-source-icon: true
+          limit: 10
+          collapse-after: 5
+          repositories:
+            - k3s-io/k3s
+            - argoproj/argo-cd
+            - traefik/traefik
+            - cert-manager/cert-manager
+            - cloudnative-pg/cloudnative-pg
+            - k8up-io/k8up
+            - bitnami-labs/sealed-secrets
+            - kube-vip/kube-vip
+            - prometheus/prometheus
+            - cloudflare/cloudflared
+
+    - size: full
+      widgets:
+        - type: split-column
+          widgets:
+            - type: hacker-news
+              collapse-after: 8
+            - type: lobsters
+              collapse-after: 8
+
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: selfhosted
+              show-thumbnails: true
+            - type: reddit
+              subreddit: homelab
+              show-thumbnails: true
+            - type: reddit
+              subreddit: kubernetes
+              show-thumbnails: true
+            - type: reddit
+              subreddit: technology
+              show-thumbnails: true
+
+    - size: small
+      widgets:
+        - type: repository
+          repository: stefan-muri/homelab
+          cache: 30m
+          pull-requests-limit: 5
+          issues-limit: 3
+          commits-limit: 5
+
+        - type: rss
+          limit: 10
+          collapse-after: 5
+          cache: 12h
+          feeds:
+            - url: https://kubernetes.io/feed.xml
+              title: Kubernetes
+            - url: https://selfh.st/rss/
+              title: selfh.st
+            - url: https://ciechanow.ski/atom.xml
+            - url: https://www.joshwcomeau.com/rss.xml
+              title: Josh Comeau
+            - url: https://samwho.dev/rss.xml
+            - url: https://ishadeed.com/feed.xml
+              title: Ahmad Shadeed

@@ -6,20 +6,24 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: glance-list-argocd-apps
+  name: glance
 rules:
   - apiGroups: ["argoproj.io"]
     resources: ["applications"]
     verbs: ["list"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    resourceNames: ["plndr-cp-lock", "plndr-svcs-lock"]
+    verbs: ["get"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: glance-list-argocd-apps
+  name: glance
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: glance-list-argocd-apps
+  name: glance
 subjects:
   - kind: ServiceAccount
     name: glance
