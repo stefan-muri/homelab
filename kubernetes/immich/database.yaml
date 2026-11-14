@@ -1,0 +1,50 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  instances: 1
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17.5-0.4.3
+  # A PDB on the only instance would block every node drain.
+  enablePDB: false
+  postgresql:
+    shared_preload_libraries:
+      - vchord.so
+  bootstrap:
+    initdb:
+      database: immich
+      owner: immich
+      secret:
+        name: immich-db
+      # Immich's own database backups run pg_dumpall, which needs a superuser.
+      postInitApplicationSQL:
+        - ALTER ROLE immich SUPERUSER
+        - CREATE EXTENSION vchord CASCADE
+        - CREATE EXTENSION earthdistance CASCADE
+  storage:
+    storageClass: local-path
+    size: 5Gi
+  affinity:
+    nodeSelector:
+      kubernetes.io/hostname: k3s-tojo
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 1Gi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: immich-db
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: immich-db
+  podMetricsEndpoints:
+    - port: metrics
