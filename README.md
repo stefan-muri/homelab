@@ -44,6 +44,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC co
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client, traffic routed through a [gluetun](https://github.com/qdm12/gluetun) WireGuard sidecar |
 | [Paperless-ngx](https://docs.paperless-ngx.com) | Document archive with OCR, scans arrive from the printer over FTP |
 | [Nextcloud](https://nextcloud.com) | File sync and sharing, on PostgreSQL |
+| [Nextcloud](https://nextcloud.com), second instance | File sync, group folders and document editing for a small company, with its own database and backups |
 | [Vaultwarden](https://github.com/dani-garcia/vaultwarden) | Password manager, compatible with the Bitwarden clients |
 
 ### GitOps

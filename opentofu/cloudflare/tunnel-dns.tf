@@ -16,6 +16,7 @@ locals {
     "docs.unterhaken.at"        = data.cloudflare_zone.main.id
     "cloud.unterhaken.at"       = data.cloudflare_zone.main.id
     "vaultwarden.unterhaken.at" = data.cloudflare_zone.main.id
+    "integrac.unterhaken.at"    = data.cloudflare_zone.main.id
   }
 }
 
@@ -78,4 +79,8 @@ import {
 import {
   to = cloudflare_dns_record.tunnel["vaultwarden.unterhaken.at"]
   id = "3faa991efaf6651816e062f3780c1d85/a9435bdbac3f23abb4e8c6d7a463e229"
+}
+import {
+  to = cloudflare_dns_record.tunnel["integrac.unterhaken.at"]
+  id = "3faa991efaf6651816e062f3780c1d85/d65954aee41dbd0c88f99b6b1715b97c"
 }
