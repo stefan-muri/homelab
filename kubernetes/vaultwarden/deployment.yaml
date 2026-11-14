@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: k3s-dojo
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: vaultwarden
+          image: vaultwarden/server:1.37.4
+          env:
+            - name: DOMAIN
+              value: https://vaultwarden.unterhaken.at
+            - name: SIGNUPS_ALLOWED
+              value: "false"
+            - name: ROCKET_PORT
+              value: "8080"
+            - name: IP_HEADER
+              value: CF-Connecting-IP
+            - name: TZ
+              value: Europe/Vienna
+          ports:
+            - name: http
+              containerPort: 8080
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /alive
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
