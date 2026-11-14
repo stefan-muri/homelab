@@ -7,7 +7,9 @@ resources:
   - deployment.yaml
   - service.yaml
   - httproute-lan.yaml
+  - backup.yaml
   - sealedsecret-nextcloud-db.yaml
+  - sealedsecret-backup-repo.yaml
 configMapGenerator:
   - name: nextcloud-config
     files:
