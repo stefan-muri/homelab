@@ -8,6 +8,8 @@ locals {
     "www.taxmirror.eu"          = data.cloudflare_zone.taxmirror.id
     "daelite.at"                = data.cloudflare_zone.daelite.id
     "www.daelite.at"            = data.cloudflare_zone.daelite.id
+    "procleangmbh.at"           = data.cloudflare_zone.proclean.id
+    "www.procleangmbh.at"       = data.cloudflare_zone.proclean.id
     "books.unterhaken.at"       = data.cloudflare_zone.main.id
     "files.unterhaken.at"       = data.cloudflare_zone.main.id
     "jellyfin.unterhaken.at"    = data.cloudflare_zone.main.id

@@ -22,6 +22,12 @@ data "cloudflare_zone" "daelite" {
   }
 }
 
+data "cloudflare_zone" "proclean" {
+  filter = {
+    name = "procleangmbh.at"
+  }
+}
+
 resource "cloudflare_dns_record" "k8s_wildcard" {
   zone_id = data.cloudflare_zone.main.id
   name    = "*.k8s.${local.zone}"

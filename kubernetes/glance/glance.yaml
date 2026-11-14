@@ -170,6 +170,9 @@ pages:
               - title: TaxMirror
                 url: https://taxmirror.eu
                 check-url: http://taxmirror.taxmirror.svc.cluster.local
+              - title: ProClean
+                url: https://www.procleangmbh.at
+                check-url: http://proclean.proclean.svc.cluster.local
 
           - type: group
             widgets:
