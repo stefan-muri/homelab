@@ -1,6 +1,6 @@
 <?php
 $CONFIG = [
-  'trusted_domains' => ['cloud.unterhaken.at', 'cloud.k8s.unterhaken.at'],
+  'trusted_domains' => ['cloud.unterhaken.at', 'cloud.k8s.unterhaken.at', 'nextcloud.nextcloud.svc.cluster.local'],
   'trusted_proxies' => ['10.42.0.0/16'],
   'overwriteprotocol' => 'https',
   'overwrite.cli.url' => 'https://cloud.unterhaken.at',

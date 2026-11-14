@@ -1,6 +1,6 @@
 <?php
 $CONFIG = [
-  'trusted_domains' => ['integrac.unterhaken.at', 'integrac.k8s.unterhaken.at'],
+  'trusted_domains' => ['integrac.unterhaken.at', 'integrac.k8s.unterhaken.at', 'nextcloud.integrac.svc.cluster.local'],
   'trusted_proxies' => ['10.42.0.0/16'],
   'overwriteprotocol' => 'https',
   'overwrite.cli.url' => 'https://integrac.unterhaken.at',
