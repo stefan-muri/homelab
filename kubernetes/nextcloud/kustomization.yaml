@@ -6,6 +6,7 @@ resources:
   - storage.yaml
   - deployment.yaml
   - service.yaml
+  - httproute.yaml
   - httproute-lan.yaml
   - backup.yaml
   - sealedsecret-nextcloud-db.yaml

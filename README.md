@@ -27,6 +27,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC co
 - **Networking:** [Traefik](https://traefik.io/traefik) implements the Gateway API with two gateways, `internal` for the LAN and `public` for the tunnel. [cloudflared](https://github.com/cloudflare/cloudflared) connects the `public` gateway to Cloudflare. [cert-manager](https://cert-manager.io) issues a Let's Encrypt wildcard certificate via DNS-01.
 - **Secrets:** [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) keeps every Secret encrypted in Git.
 - **Storage and backups:** the k3s `local-path` provisioner for application data, static NFS volumes for media, and [k8up](https://k8up.io) for restic backups.
+- **Databases:** [CloudNativePG](https://cloudnative-pg.io) runs PostgreSQL for applications that need a database server.
 - **Monitoring:** [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) with Prometheus, Alertmanager and Grafana.
 - **Devices:** the [Intel GPU device plugin](https://github.com/intel/intel-device-plugins-for-kubernetes) exposes the GVT-g virtual GPU for hardware transcoding.
 
@@ -42,6 +43,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC co
 | [kobser](https://github.com/kobsermusic/kobser), [Navidrome](https://www.navidrome.org) | Music downloader and music streaming server |
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client, traffic routed through a [gluetun](https://github.com/qdm12/gluetun) WireGuard sidecar |
 | [Paperless-ngx](https://docs.paperless-ngx.com) | Document archive with OCR, scans arrive from the printer over FTP |
+| [Nextcloud](https://nextcloud.com) | File sync and sharing, on PostgreSQL |
 
 ### GitOps
 
@@ -92,7 +94,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 
 - Application configuration and databases use `local-path` volumes, pinned to one node.
 - Media is mounted from the NFS server on tojo through static PersistentVolumes.
-- k8up backs up the `local-path` volumes every night to the restic REST server on tojo. Applications with SQLite databases also back up an SQL dump taken before each run.
+- k8up backs up the `local-path` volumes every night to the restic REST server on tojo. Applications with a database also back up an SQL dump taken before each run: `sqlite3 .dump` for SQLite, `pg_dump` for PostgreSQL.
 - Retention is 14 daily, 8 weekly and 6 monthly snapshots. Prune and check run on Sundays.
 - NFS volumes are excluded with the label `k8up.io/backup: "false"`.
 - tojo copies the restic repository offsite every morning.

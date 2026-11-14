@@ -29,6 +29,12 @@
       "matchStrings": ["kube_vip_version: (?<currentValue>v\\S+)"],
       "depNameTemplate": "ghcr.io/kube-vip/kube-vip",
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"],
+      "matchStrings": ["imageName: (?<depName>ghcr\\.io/cloudnative-pg/postgresql):(?<currentValue>\\S+)"],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [
@@ -45,6 +51,12 @@
       "description": "pure-ftpd tags carry the Debian release: trixie-1.0.50.",
       "matchPackageNames": ["stilliard/pure-ftpd"],
       "versioning": "regex:^trixie-(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+    },
+    {
+      "description": "Nextcloud refuses to skip a major.",
+      "matchPackageNames": ["nextcloud"],
+      "matchUpdateTypes": ["major"],
+      "prBodyNotes": ["Nextcloud upgrades one major at a time. If this skips a major, deploy the one in between first. Check that a backup from the same night exists before merging."]
     },
     {
       "description": "kobser is built from its own repository. Its newest build goes live without review.",

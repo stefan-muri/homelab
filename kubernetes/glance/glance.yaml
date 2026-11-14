@@ -119,12 +119,10 @@ pages:
                 check-url: http://jellyfin.jellyfin.svc.cluster.local/health
                 icon: si:jellyfin
                 alt-status-codes: [302]
-              - title: NextCloud
+              - title: Nextcloud
                 url: https://cloud.unterhaken.at
-                check-url: https://10.0.0.22:4444
+                check-url: http://nextcloud.nextcloud.svc.cluster.local/status.php
                 icon: si:nextcloud
-                allow-insecure: true
-                alt-status-codes: [302]
               - title: Nextcloud (Integrac)
                 url: https://integrac.unterhaken.at
                 # status.php answers 200 directly; / redirects to an https URL
