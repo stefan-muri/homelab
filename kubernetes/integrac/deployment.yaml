@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nextcloud
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: k3s-dojo
+      initContainers:
+        - name: valkey
+          image: valkey/valkey:9.1.2-alpine
+          restartPolicy: Always
+          args: ["--bind", "127.0.0.1", "--save", "", "--appendonly", "no"]
+          startupProbe:
+            exec:
+              command: ["valkey-cli", "ping"]
+            periodSeconds: 2
+            failureThreshold: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 128Mi
+      containers:
+        - name: nextcloud
+          image: nextcloud:35.0.2-apache
+          env:
+            - name: TZ
+              value: Europe/Vienna
+            - name: PHP_MEMORY_LIMIT
+              value: 1G
+            - name: PHP_UPLOAD_LIMIT
+              value: 2G
+          ports:
+            - name: http
+              containerPort: 80
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /status.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: integrac.unterhaken.at
+            timeoutSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 3Gi
+          volumeMounts:
+            - name: html
+              mountPath: /var/www/html
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /var/www/html/config/k8s.config.php
+              subPath: k8s.config.php
+        - name: cron
+          image: nextcloud:35.0.2-apache
+          command: ["/cron.sh"]
+          env:
+            - name: TZ
+              value: Europe/Vienna
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: html
+              mountPath: /var/www/html
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /var/www/html/config/k8s.config.php
+              subPath: k8s.config.php
+      volumes:
+        - name: html
+          persistentVolumeClaim:
+            claimName: html
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: config
+          configMap:
+            name: nextcloud-config

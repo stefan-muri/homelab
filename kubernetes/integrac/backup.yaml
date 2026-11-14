@@ -1,0 +1,59 @@
+apiVersion: k8up.io/v1
+kind: Schedule
+metadata:
+  name: backup
+spec:
+  backend:
+    repoPasswordSecretRef:
+      name: backup-repo
+      key: repo-password
+    rest:
+      url: http://10.0.0.8:8000/k3s/
+      userSecretRef:
+        name: backup-repo
+        key: rest-user
+      passwordSecretReg:
+        name: backup-repo
+        key: rest-password
+  backup:
+    schedule: "10 4 * * *"
+    podSecurityContext:
+      runAsUser: 33
+      runAsGroup: 33
+  prune:
+    schedule: "0 12 * * 0"
+    retention:
+      keepDaily: 14
+      keepWeekly: 8
+      keepMonthly: 6
+  check:
+    schedule: "30 12 * * 0"
+---
+apiVersion: k8up.io/v1
+kind: PreBackupPod
+metadata:
+  name: integrac-db
+spec:
+  backupCommand: pg_dump --clean --if-exists --no-owner
+  fileExtension: .sql
+  pod:
+    spec:
+      containers:
+        - name: pgdump
+          image: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+          command: ["sleep", "infinity"]
+          env:
+            - name: PGHOST
+              value: integrac-db-rw
+            - name: PGDATABASE
+              value: integrac
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: integrac-db
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: integrac-db
+                  key: password
