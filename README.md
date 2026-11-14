@@ -13,8 +13,8 @@ Infrastructure as code for a three-node k3s cluster on Proxmox VE, managed with 
 
 | Host | Model | CPU | RAM | k3s VM |
 |---|---|---|---|---|
-| dojo | Lenovo ThinkCentre M910q | Intel Core i5-6600T | 16 GB | k3s-dojo, 2 vCPU, 6 GB |
-| tojo | HP ProDesk 600 G3 DM | Intel Core i3-7100T | 12 GB | k3s-tojo, 2 vCPU, 6 GB, GVT-g virtual GPU |
+| dojo | Lenovo ThinkCentre M910q | Intel Core i5-6600T | 16 GB | k3s-dojo, 2 vCPU, 8 GB |
+| tojo | HP ProDesk 600 G3 DM | Intel Core i3-7100T | 12 GB | k3s-tojo, 2 vCPU, 8 GB, GVT-g virtual GPU |
 | mojo | HP ProDesk 600 G4 DM | Intel Core i3-8100T | 8 GB | k3s-mojo, 2 vCPU, 4 GB |
 
 The three hosts form one Proxmox VE cluster. Besides the k3s VMs they run LXC containers for services that have not moved into the cluster yet. The hosts and those containers are managed in a separate repository. tojo also serves NFS for media and hosts the restic REST server for backups.

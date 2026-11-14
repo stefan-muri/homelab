@@ -3,7 +3,7 @@ locals {
 
   k3s_nodes = {
     dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 8192, gvt = null }
-    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 6144, gvt = "i915-GVTg_V5_4" }
+    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 8192, gvt = "i915-GVTg_V5_4" }
     mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 4096, gvt = null }
   }
 
