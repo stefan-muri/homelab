@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mirror-sync
+spec:
+  schedule: "0 9 * * *"
+  timeZone: Europe/Vienna
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          enableServiceLinks: false
+          restartPolicy: Never
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          containers:
+            - name: mirror-sync
+              image: python:3.15.2-alpine3.24
+              command: ["python", "-u", "/scripts/mirror-sync.py"]
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: mirror-sync
+                      key: github-token
+                - name: GITEA_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: mirror-sync
+                      key: gitea-token
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+          volumes:
+            - name: scripts
+              configMap:
+                name: mirror-sync
