@@ -197,76 +197,6 @@
         - type: split-column
           widgets:
             - type: custom-api
-              title: Argo CD
-              title-url: https://argocd.k8s.unterhaken.at
-              cache: 1m
-              url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
-              headers:
-                Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
-              template: |
-                {{ $apps := sortByString "metadata.name" "asc" (.JSON.Array "items") }}
-                {{ $bad := 0 }}
-                {{ range $apps }}{{ if not (and (eq (.String "status.sync.status") "Synced") (eq (.String "status.health.status") "Healthy")) }}{{ $bad = add $bad 1 }}{{ end }}{{ end }}
-                <div class="size-h5 margin-bottom-10">
-                  {{ if eq $bad 0 }}<span class="color-positive">{{ len $apps }} apps, all synced and healthy</span>{{ else }}<span class="color-negative">{{ $bad }} of {{ len $apps }} apps need attention</span>{{ end }}
-                </div>
-                <div class="tile-grid">
-                  {{ range $apps }}
-                    {{ $name := .String "metadata.name" }}
-                    {{ $sync := .String "status.sync.status" }}
-                    {{ $health := .String "status.health.status" }}
-                    {{ $ok := and (eq $sync "Synced") (eq $health "Healthy") }}
-                    <a class="flex items-center gap-10 min-width-0" href="https://argocd.k8s.unterhaken.at/applications/argocd/{{ $name }}" target="_blank" rel="noreferrer" title="{{ $sync }} · {{ $health }}">
-                      <span class="dot{{ if not $ok }}{{ if eq $health "Progressing" }} dot-warn{{ else }} dot-bad{{ end }}{{ end }}"></span>
-                      <span class="text-truncate {{ if $ok }}color-paragraph{{ else }}color-highlight{{ end }}">{{ $name }}</span>
-                      {{ if not $ok }}<span class="size-h6 margin-left-auto shrink-0 {{ if eq $health "Progressing" }}color-primary{{ else }}color-negative{{ end }}">{{ if ne $health "Healthy" }}{{ $health }}{{ else }}{{ $sync }}{{ end }}</span>{{ end }}
-                    </a>
-                  {{ end }}
-                </div>
-
-            - type: custom-api
-              title: Backups
-              cache: 5m
-              url: ${PROMETHEUS_URL}/api/v1/query
-              parameters:
-                query: k8up_schedules_gauge
-              subrequests:
-                last:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: floor(max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}))
-                age:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
-                failed:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: round(sum by (exported_namespace) (increase(k8up_jobs_failed_counter{jobType="backup"}[24h])))
-              template: |
-                {{ $last := .Subrequest "last" }}
-                {{ $age := .Subrequest "age" }}
-                {{ $failed := .Subrequest "failed" }}
-                <div class="size-h5 margin-bottom-10">Nightly k8up snapshots to the REST server on tojo</div>
-                <ul class="list list-gap-8">
-                  {{ range sortByString "metric.exported_namespace" "asc" (.JSON.Array "data.result") }}
-                    {{ $ns := .String "metric.exported_namespace" }}
-                    {{ $q := printf "data.result.#(metric.namespace==%q).value.1" $ns }}
-                    {{ $ts := $last.JSON.String $q }}
-                    {{ $fails := $failed.JSON.Int (printf "data.result.#(metric.exported_namespace==%q).value.1" $ns) }}
-                    {{ $fresh := and (ne $ts "") (lt ($age.JSON.Float $q) 93600.0) }}
-                    <li class="flex items-center gap-10">
-                      <span class="dot{{ if eq $ts "" }} dot-idle{{ else if or (not $fresh) (gt $fails 0) }} dot-bad{{ end }}"></span>
-                      <span class="color-paragraph text-truncate min-width-0">{{ $ns }}</span>
-                      {{ if gt $fails 0 }}<span class="size-h6 color-negative shrink-0">{{ $fails }} failed</span>{{ end }}
-                      <span class="size-h6 margin-left-auto shrink-0 {{ if and (ne $ts "") (not $fresh) }}color-negative{{ else }}color-subdue{{ end }}">{{ if eq $ts "" }}pending{{ else }}<span {{ $ts | parseRelativeTime "unix" }}></span> ago{{ end }}</span>
-                    </li>
-                  {{ end }}
-                </ul>
-
-        - type: split-column
-          widgets:
-            - type: custom-api
               title: Databases
               cache: 1m
               url: ${PROMETHEUS_URL}/api/v1/query
@@ -314,6 +244,76 @@
                     </li>
                   {{ end }}
                 </ul>
+
+            - type: custom-api
+              title: Backups
+              cache: 5m
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: k8up_schedules_gauge
+              subrequests:
+                last:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: floor(max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}))
+                age:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
+                failed:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(sum by (exported_namespace) (increase(k8up_jobs_failed_counter{jobType="backup"}[24h])))
+              template: |
+                {{ $last := .Subrequest "last" }}
+                {{ $age := .Subrequest "age" }}
+                {{ $failed := .Subrequest "failed" }}
+                <div class="size-h5 margin-bottom-10">Nightly k8up snapshots to the REST server on tojo</div>
+                <ul class="list list-gap-8">
+                  {{ range sortByString "metric.exported_namespace" "asc" (.JSON.Array "data.result") }}
+                    {{ $ns := .String "metric.exported_namespace" }}
+                    {{ $q := printf "data.result.#(metric.namespace==%q).value.1" $ns }}
+                    {{ $ts := $last.JSON.String $q }}
+                    {{ $fails := $failed.JSON.Int (printf "data.result.#(metric.exported_namespace==%q).value.1" $ns) }}
+                    {{ $fresh := and (ne $ts "") (lt ($age.JSON.Float $q) 93600.0) }}
+                    <li class="flex items-center gap-10">
+                      <span class="dot{{ if eq $ts "" }} dot-idle{{ else if or (not $fresh) (gt $fails 0) }} dot-bad{{ end }}"></span>
+                      <span class="color-paragraph text-truncate min-width-0">{{ $ns }}</span>
+                      {{ if gt $fails 0 }}<span class="size-h6 color-negative shrink-0">{{ $fails }} failed</span>{{ end }}
+                      <span class="size-h6 margin-left-auto shrink-0 {{ if and (ne $ts "") (not $fresh) }}color-negative{{ else }}color-subdue{{ end }}">{{ if eq $ts "" }}pending{{ else }}<span {{ $ts | parseRelativeTime "unix" }}></span> ago{{ end }}</span>
+                    </li>
+                  {{ end }}
+                </ul>
+
+        - type: split-column
+          widgets:
+            - type: custom-api
+              title: Argo CD
+              title-url: https://argocd.k8s.unterhaken.at
+              cache: 1m
+              url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
+              headers:
+                Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+              template: |
+                {{ $apps := sortByString "metadata.name" "asc" (.JSON.Array "items") }}
+                {{ $bad := 0 }}
+                {{ range $apps }}{{ if not (and (eq (.String "status.sync.status") "Synced") (eq (.String "status.health.status") "Healthy")) }}{{ $bad = add $bad 1 }}{{ end }}{{ end }}
+                <div class="size-h5 margin-bottom-10">
+                  {{ if eq $bad 0 }}<span class="color-positive">{{ len $apps }} apps, all synced and healthy</span>{{ else }}<span class="color-negative">{{ $bad }} of {{ len $apps }} apps need attention</span>{{ end }}
+                </div>
+                <div class="tile-grid">
+                  {{ range $apps }}
+                    {{ $name := .String "metadata.name" }}
+                    {{ $sync := .String "status.sync.status" }}
+                    {{ $health := .String "status.health.status" }}
+                    {{ $ok := and (eq $sync "Synced") (eq $health "Healthy") }}
+                    <a class="flex items-center gap-10 min-width-0" href="https://argocd.k8s.unterhaken.at/applications/argocd/{{ $name }}" target="_blank" rel="noreferrer" title="{{ $sync }} · {{ $health }}">
+                      <span class="dot{{ if not $ok }}{{ if eq $health "Progressing" }} dot-warn{{ else }} dot-bad{{ end }}{{ end }}"></span>
+                      <span class="text-truncate {{ if $ok }}color-paragraph{{ else }}color-highlight{{ end }}">{{ $name }}</span>
+                      {{ if not $ok }}<span class="size-h6 margin-left-auto shrink-0 {{ if eq $health "Progressing" }}color-primary{{ else }}color-negative{{ end }}">{{ if ne $health "Healthy" }}{{ $health }}{{ else }}{{ $sync }}{{ end }}</span>{{ end }}
+                    </a>
+                  {{ end }}
+                </div>
 
             - type: custom-api
               title: Memory by pod

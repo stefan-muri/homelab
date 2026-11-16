@@ -40,40 +40,6 @@
         - type: calendar
           first-day-of-week: sunday
 
-        - type: bookmarks
-          title: Admin
-          groups:
-            - title: Proxmox
-              links:
-                - title: dojo
-                  url: https://10.0.0.7:8006
-                  icon: si:proxmox
-                - title: tojo
-                  url: https://10.0.0.8:8006
-                  icon: si:proxmox
-                - title: mojo
-                  url: https://10.0.0.9:8006
-                  icon: si:proxmox
-            - title: Cloud
-              links:
-                - title: Cloudflare
-                  url: https://dash.cloudflare.com
-                  icon: si:cloudflare
-                - title: Healthchecks.io
-                  url: https://healthchecks.io/
-                  icon: sh:healthchecks
-                - title: Hetzner
-                  url: https://console.hetzner.com
-                  icon: si:hetzner
-            - title: Code
-              links:
-                - title: homelab
-                  url: https://github.com/stefan-muri/homelab
-                  icon: si:github
-                - title: murisato
-                  url: https://github.com/stefan-muri/murisato
-                  icon: si:github
-
     - size: full
       widgets:
         # url is the public hostname where one exists, so a tile works from
@@ -150,6 +116,10 @@
                   url: https://grafana.k8s.unterhaken.at
                   check-url: http://kube-prometheus-stack-grafana.monitoring.svc.cluster.local/api/health
                   icon: si:grafana
+                - title: Gitea
+                  url: https://git.k8s.unterhaken.at
+                  check-url: http://gitea.gitea.svc.cluster.local/api/healthz
+                  icon: si:gitea
 
             - type: monitor
               cache: 1m
@@ -257,3 +227,37 @@
               {{ end }}
             </ul>
             {{ end }}
+
+        - type: bookmarks
+          title: Admin
+          groups:
+            - title: Proxmox
+              links:
+                - title: dojo
+                  url: https://10.0.0.7:8006
+                  icon: si:proxmox
+                - title: tojo
+                  url: https://10.0.0.8:8006
+                  icon: si:proxmox
+                - title: mojo
+                  url: https://10.0.0.9:8006
+                  icon: si:proxmox
+            - title: Cloud
+              links:
+                - title: Cloudflare
+                  url: https://dash.cloudflare.com
+                  icon: si:cloudflare
+                - title: Healthchecks.io
+                  url: https://healthchecks.io/
+                  icon: sh:healthchecks
+                - title: Hetzner
+                  url: https://console.hetzner.com
+                  icon: si:hetzner
+            - title: Code
+              links:
+                - title: homelab
+                  url: https://github.com/stefan-muri/homelab
+                  icon: si:github
+                - title: murisato
+                  url: https://github.com/stefan-muri/murisato
+                  icon: si:github
