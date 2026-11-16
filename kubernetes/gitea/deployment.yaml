@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gitea
+  template:
+    metadata:
+      labels:
+        app: gitea
+    spec:
+      enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/hostname: k3s-tojo
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: gitea
+          image: gitea/gitea:28.4.0-rootless
+          env:
+            - name: GITEA__server__ROOT_URL
+              value: https://git.k8s.unterhaken.at/
+            - name: GITEA__server__DISABLE_SSH
+              value: "true"
+            - name: GITEA__security__INSTALL_LOCK
+              value: "true"
+            - name: GITEA__security__SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gitea
+                  key: secret-key
+            - name: GITEA__service__DISABLE_REGISTRATION
+              value: "true"
+            - name: GITEA__service__REQUIRE_SIGNIN_VIEW
+              value: "true"
+            - name: GITEA__actions__ENABLED
+              value: "false"
+            - name: GITEA__mirror__DEFAULT_INTERVAL
+              value: 1h
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+          resources:
+            requests:
+              cpu: 10m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+            - name: config
+              mountPath: /etc/gitea
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: data
+        - name: config
+          emptyDir: {}
