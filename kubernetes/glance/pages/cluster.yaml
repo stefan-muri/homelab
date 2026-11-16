@@ -234,11 +234,15 @@
                 last:
                   url: ${PROMETHEUS_URL}/api/v1/query
                   parameters:
-                    query: floor(max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}))
+                    query: >-
+                      floor(max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
+                      or max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name=~".+-prebackup"}))
                 age:
                   url: ${PROMETHEUS_URL}/api/v1/query
                   parameters:
-                    query: time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
+                    query: >-
+                      time() - (max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"})
+                      or max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name=~".+-prebackup"}))
                 failed:
                   url: ${PROMETHEUS_URL}/api/v1/query
                   parameters:
