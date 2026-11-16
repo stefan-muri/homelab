@@ -194,57 +194,36 @@
                   url: http://10.0.0.9:27973
                   token: ${GLANCE_AGENT_TOKEN}
 
+        - type: custom-api
+          title: Argo CD
+          title-url: https://argocd.k8s.unterhaken.at
+          cache: 1m
+          url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
+          headers:
+            Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
+          template: |
+            {{ $apps := sortByString "metadata.name" "asc" (.JSON.Array "items") }}
+            {{ $bad := 0 }}
+            {{ range $apps }}{{ if not (and (eq (.String "status.sync.status") "Synced") (eq (.String "status.health.status") "Healthy")) }}{{ $bad = add $bad 1 }}{{ end }}{{ end }}
+            <div class="size-h5 margin-bottom-10">
+              {{ if eq $bad 0 }}<span class="color-positive">{{ len $apps }} apps, all synced and healthy</span>{{ else }}<span class="color-negative">{{ $bad }} of {{ len $apps }} apps need attention</span>{{ end }}
+            </div>
+            <div class="tile-grid">
+              {{ range $apps }}
+                {{ $name := .String "metadata.name" }}
+                {{ $sync := .String "status.sync.status" }}
+                {{ $health := .String "status.health.status" }}
+                {{ $ok := and (eq $sync "Synced") (eq $health "Healthy") }}
+                <a class="flex items-center gap-10 min-width-0" href="https://argocd.k8s.unterhaken.at/applications/argocd/{{ $name }}" target="_blank" rel="noreferrer" title="{{ $sync }} · {{ $health }}">
+                  <span class="dot{{ if not $ok }}{{ if eq $health "Progressing" }} dot-warn{{ else }} dot-bad{{ end }}{{ end }}"></span>
+                  <span class="text-truncate {{ if $ok }}color-paragraph{{ else }}color-highlight{{ end }}">{{ $name }}</span>
+                  {{ if not $ok }}<span class="size-h6 margin-left-auto shrink-0 {{ if eq $health "Progressing" }}color-primary{{ else }}color-negative{{ end }}">{{ if ne $health "Healthy" }}{{ $health }}{{ else }}{{ $sync }}{{ end }}</span>{{ end }}
+                </a>
+              {{ end }}
+            </div>
+
         - type: split-column
           widgets:
-            - type: custom-api
-              title: Databases
-              cache: 1m
-              url: ${PROMETHEUS_URL}/api/v1/query
-              parameters:
-                query: cnpg_collector_postgres_version
-              subrequests:
-                up:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: cnpg_collector_up
-                size:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: round(sum by (namespace) (cnpg_pg_database_size_bytes{datname!~"postgres|template.*"}) / 2^20)
-                connections:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: sum by (namespace) (cnpg_backends_total)
-                start:
-                  url: ${PROMETHEUS_URL}/api/v1/query
-                  parameters:
-                    query: floor(max by (namespace) (cnpg_pg_postmaster_start_time))
-              template: |
-                {{ $up := .Subrequest "up" }}
-                {{ $size := .Subrequest "size" }}
-                {{ $connections := .Subrequest "connections" }}
-                {{ $start := .Subrequest "start" }}
-                <div class="size-h5 margin-bottom-10">CloudNativePG, one instance each on local-path</div>
-                <ul class="list list-gap-14">
-                  {{ range sortByString "metric.cluster" "asc" (.JSON.Array "data.result") }}
-                    {{ $q := printf "data.result.#(metric.namespace==%q).value.1" (.String "metric.namespace") }}
-                    {{ $isUp := eq ($up.JSON.Int $q) 1 }}
-                    <li>
-                      <div class="flex items-center gap-10">
-                        <span class="dot{{ if not $isUp }} dot-bad{{ end }}"></span>
-                        <span class="color-highlight">{{ .String "metric.cluster" }}</span>
-                        <span class="badge margin-left-auto">PG {{ .String "metric.full" }}</span>
-                      </div>
-                      <ul class="list-horizontal-text size-h6 margin-top-3 db-details">
-                        <li>{{ $size.JSON.Int $q | formatNumber }} MiB</li>
-                        {{ $conns := $connections.JSON.Int $q }}
-                        <li>{{ $conns }} {{ if eq $conns 1 }}connection{{ else }}connections{{ end }}</li>
-                        <li>up <span {{ $start.JSON.String $q | parseRelativeTime "unix" }}></span></li>
-                      </ul>
-                    </li>
-                  {{ end }}
-                </ul>
-
             - type: custom-api
               title: Backups
               cache: 5m
@@ -284,36 +263,6 @@
                     </li>
                   {{ end }}
                 </ul>
-
-        - type: split-column
-          widgets:
-            - type: custom-api
-              title: Argo CD
-              title-url: https://argocd.k8s.unterhaken.at
-              cache: 1m
-              url: https://kubernetes.default.svc/apis/argoproj.io/v1alpha1/namespaces/argocd/applications
-              headers:
-                Authorization: Bearer ${readFileFromEnv:KUBE_TOKEN_FILE}
-              template: |
-                {{ $apps := sortByString "metadata.name" "asc" (.JSON.Array "items") }}
-                {{ $bad := 0 }}
-                {{ range $apps }}{{ if not (and (eq (.String "status.sync.status") "Synced") (eq (.String "status.health.status") "Healthy")) }}{{ $bad = add $bad 1 }}{{ end }}{{ end }}
-                <div class="size-h5 margin-bottom-10">
-                  {{ if eq $bad 0 }}<span class="color-positive">{{ len $apps }} apps, all synced and healthy</span>{{ else }}<span class="color-negative">{{ $bad }} of {{ len $apps }} apps need attention</span>{{ end }}
-                </div>
-                <div class="tile-grid">
-                  {{ range $apps }}
-                    {{ $name := .String "metadata.name" }}
-                    {{ $sync := .String "status.sync.status" }}
-                    {{ $health := .String "status.health.status" }}
-                    {{ $ok := and (eq $sync "Synced") (eq $health "Healthy") }}
-                    <a class="flex items-center gap-10 min-width-0" href="https://argocd.k8s.unterhaken.at/applications/argocd/{{ $name }}" target="_blank" rel="noreferrer" title="{{ $sync }} · {{ $health }}">
-                      <span class="dot{{ if not $ok }}{{ if eq $health "Progressing" }} dot-warn{{ else }} dot-bad{{ end }}{{ end }}"></span>
-                      <span class="text-truncate {{ if $ok }}color-paragraph{{ else }}color-highlight{{ end }}">{{ $name }}</span>
-                      {{ if not $ok }}<span class="size-h6 margin-left-auto shrink-0 {{ if eq $health "Progressing" }}color-primary{{ else }}color-negative{{ end }}">{{ if ne $health "Healthy" }}{{ $health }}{{ else }}{{ $sync }}{{ end }}</span>{{ end }}
-                    </a>
-                  {{ end }}
-                </div>
 
             - type: custom-api
               title: Memory by pod
@@ -368,6 +317,31 @@
             {{ end }}
 
         - type: custom-api
+          title: Restarts, 24h
+          cache: 5m
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: sort_desc(round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[24h]))) > 0)
+          template: |
+            {{ $pods := .JSON.Array "data.result" }}
+            {{ if eq (len $pods) 0 }}
+              <div class="flex items-center gap-10">
+                <span class="dot"></span>
+                <span class="color-positive">No restarts</span>
+              </div>
+            {{ else }}
+              <ul class="list list-gap-10">
+                {{ range $pods }}
+                  <li class="flex items-center gap-10 size-h6">
+                    <span class="color-paragraph text-truncate min-width-0" title="{{ .String "metric.namespace" }}/{{ .String "metric.pod" }}">{{ .String "metric.pod" | replaceMatches "-[bcdfghjklmnpqrstvwxz2456789]{8,10}-[bcdfghjklmnpqrstvwxz2456789]{5}$|-[bcdfghjklmnpqrstvwxz2456789]{5}$" "" }}</span>
+                    <span class="color-subdue shrink-0">{{ .String "metric.namespace" }}</span>
+                    <span class="color-highlight margin-left-auto shrink-0">{{ .String "value.1" }}×</span>
+                  </li>
+                {{ end }}
+              </ul>
+            {{ end }}
+
+        - type: custom-api
           title: Capacity
           cache: 1m
           url: ${PROMETHEUS_URL}/api/v1/query
@@ -408,6 +382,55 @@
             </div>
 
         - type: custom-api
+          title: Databases
+          cache: 1m
+          url: ${PROMETHEUS_URL}/api/v1/query
+          parameters:
+            query: cnpg_collector_postgres_version
+          subrequests:
+            up:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: cnpg_collector_up
+            size:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: round(sum by (namespace) (cnpg_pg_database_size_bytes{datname!~"postgres|template.*"}) / 2^20)
+            connections:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: sum by (namespace) (cnpg_backends_total)
+            start:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: floor(max by (namespace) (cnpg_pg_postmaster_start_time))
+          template: |
+            {{ $up := .Subrequest "up" }}
+            {{ $size := .Subrequest "size" }}
+            {{ $connections := .Subrequest "connections" }}
+            {{ $start := .Subrequest "start" }}
+            <div class="size-h5 margin-bottom-10">CloudNativePG, one instance each on local-path</div>
+            <ul class="list list-gap-14">
+              {{ range sortByString "metric.cluster" "asc" (.JSON.Array "data.result") }}
+                {{ $q := printf "data.result.#(metric.namespace==%q).value.1" (.String "metric.namespace") }}
+                {{ $isUp := eq ($up.JSON.Int $q) 1 }}
+                <li>
+                  <div class="flex items-center gap-10">
+                    <span class="dot{{ if not $isUp }} dot-bad{{ end }}"></span>
+                    <span class="color-highlight">{{ .String "metric.cluster" }}</span>
+                    <span class="badge margin-left-auto">PG {{ .String "metric.full" }}</span>
+                  </div>
+                  <ul class="list-horizontal-text size-h6 margin-top-3 db-details">
+                    <li>{{ $size.JSON.Int $q | formatNumber }} MiB</li>
+                    {{ $conns := $connections.JSON.Int $q }}
+                    <li>{{ $conns }} {{ if eq $conns 1 }}connection{{ else }}connections{{ end }}</li>
+                    <li>up <span {{ $start.JSON.String $q | parseRelativeTime "unix" }}></span></li>
+                  </ul>
+                </li>
+              {{ end }}
+            </ul>
+
+        - type: custom-api
           title: Certificates
           cache: 1h
           url: ${PROMETHEUS_URL}/api/v1/query
@@ -424,28 +447,3 @@
                 </li>
               {{ end }}
             </ul>
-
-        - type: custom-api
-          title: Restarts, 24h
-          cache: 5m
-          url: ${PROMETHEUS_URL}/api/v1/query
-          parameters:
-            query: sort_desc(round(sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[24h]))) > 0)
-          template: |
-            {{ $pods := .JSON.Array "data.result" }}
-            {{ if eq (len $pods) 0 }}
-              <div class="flex items-center gap-10">
-                <span class="dot"></span>
-                <span class="color-positive">No restarts</span>
-              </div>
-            {{ else }}
-              <ul class="list list-gap-10">
-                {{ range $pods }}
-                  <li class="flex items-center gap-10 size-h6">
-                    <span class="color-paragraph text-truncate min-width-0" title="{{ .String "metric.namespace" }}/{{ .String "metric.pod" }}">{{ .String "metric.pod" | replaceMatches "-[bcdfghjklmnpqrstvwxz2456789]{8,10}-[bcdfghjklmnpqrstvwxz2456789]{5}$|-[bcdfghjklmnpqrstvwxz2456789]{5}$" "" }}</span>
-                    <span class="color-subdue shrink-0">{{ .String "metric.namespace" }}</span>
-                    <span class="color-highlight margin-left-auto shrink-0">{{ .String "value.1" }}×</span>
-                  </li>
-                {{ end }}
-              </ul>
-            {{ end }}
