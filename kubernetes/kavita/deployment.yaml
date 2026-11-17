@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: kavita
-          image: lscr.io/linuxserver/kavita:v0.9.1.4-ls129
+          image: lscr.io/linuxserver/kavita:v0.9.1.4-ls132
           env:
             - name: PUID
               value: "1000"

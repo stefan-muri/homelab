@@ -19,7 +19,7 @@ spec:
         kubernetes.io/hostname: k3s-dojo
       initContainers:
         - name: valkey
-          image: valkey/valkey:9.1.2-alpine
+          image: valkey/valkey:9.1.3-alpine
           restartPolicy: Always
           args: ["--bind", "127.0.0.1", "--save", "", "--appendonly", "no"]
           startupProbe:
@@ -35,7 +35,7 @@ spec:
               memory: 128Mi
       containers:
         - name: nextcloud
-          image: nextcloud:35.0.2-apache
+          image: nextcloud:35.0.3-apache
           env:
             - name: TZ
               value: Europe/Vienna
@@ -79,7 +79,7 @@ spec:
               mountPath: /var/www/html/config/k8s.config.php
               subPath: k8s.config.php
         - name: cron
-          image: nextcloud:35.0.2-apache
+          image: nextcloud:35.0.3-apache
           command: ["/cron.sh"]
           env:
             - name: TZ

@@ -17,7 +17,7 @@ spec:
       enableServiceLinks: false
       initContainers:
         - name: broker
-          image: valkey/valkey:9.1.2-alpine
+          image: valkey/valkey:9.1.3-alpine
           restartPolicy: Always
           args: ["--bind", "127.0.0.1", "--save", "", "--appendonly", "no"]
           startupProbe:
@@ -33,7 +33,7 @@ spec:
               memory: 128Mi
       containers:
         - name: paperless
-          image: ghcr.io/paperless-ngx/paperless-ngx:3.3.3
+          image: ghcr.io/paperless-ngx/paperless-ngx:3.4.2
           env:
             - name: PAPERLESS_REDIS
               value: redis://localhost:6379

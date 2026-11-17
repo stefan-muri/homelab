@@ -15,7 +15,7 @@ spec:
       serviceAccountName: glance
       containers:
         - name: glance
-          image: glanceapp/glance:v0.8.7
+          image: glanceapp/glance:v0.8.8
           env:
             - name: TZ
               value: Europe/Vienna
