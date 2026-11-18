@@ -36,7 +36,7 @@ resource "proxmox_virtual_environment_vm" "k3s" {
     datastore_id = each.value.datastore
     import_from  = "local:import/debian-13-genericcloud-amd64.qcow2"
     interface    = "scsi0"
-    size         = 40
+    size         = 60
   }
 
   network_device {
