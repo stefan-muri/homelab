@@ -27,15 +27,18 @@ controller:
   resources:
     requests:
       cpu: 50m
-      memory: 512Mi
+      memory: 768Mi
     limits:
-      memory: 1536Mi
+      memory: 2Gi
   metrics:
     enabled: true
     serviceMonitor:
       enabled: true
 
 server:
+  resources:
+    requests:
+      memory: 96Mi
   httproute:
     enabled: true
     parentRefs:
@@ -44,3 +47,18 @@ server:
         sectionName: websecure
     hostnames:
       - argocd.k8s.unterhaken.at
+
+repoServer:
+  resources:
+    requests:
+      memory: 192Mi
+
+applicationSet:
+  resources:
+    requests:
+      memory: 96Mi
+
+notifications:
+  resources:
+    requests:
+      memory: 80Mi
