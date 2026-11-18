@@ -6,6 +6,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
   instances: 2
+  primaryUpdateMethod: switchover
   imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
   postgresql:
     parameters:
