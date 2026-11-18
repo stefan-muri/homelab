@@ -38,7 +38,21 @@ spec:
             - name: PAPERLESS_REDIS
               value: redis://localhost:6379
             - name: PAPERLESS_DBENGINE
-              value: sqlite
+              value: postgresql
+            - name: PAPERLESS_DBHOST
+              value: paperless-db-rw
+            - name: PAPERLESS_DBNAME
+              value: paperless
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db
+                  key: username
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-db
+                  key: password
             - name: PAPERLESS_URL
               value: https://docs.unterhaken.at
             - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
