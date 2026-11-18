@@ -19,6 +19,10 @@ spec:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
   syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/warn: baseline
     automated:
       prune: true
       selfHeal: true

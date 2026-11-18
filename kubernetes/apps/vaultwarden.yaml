@@ -15,6 +15,10 @@ spec:
     server: https://kubernetes.default.svc
     namespace: vaultwarden
   syncPolicy:
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: baseline
+        pod-security.kubernetes.io/warn: baseline
     automated:
       prune: true
       selfHeal: true
