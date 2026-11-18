@@ -102,6 +102,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 - k8up backs up the `local-path` volumes every night to the restic REST server on tojo. Applications with a database also back up an SQL dump taken before each run: `sqlite3 .dump` for SQLite, `pg_dump` for PostgreSQL.
 - Retention is 14 daily, 8 weekly and 6 monthly snapshots. Prune and check run on Sundays.
 - NFS volumes are excluded with the label `k8up.io/backup: "false"`.
+- k3s takes an etcd snapshot every 12 hours on each node. The CronJob in `etcd-backup` copies them into the same restic repository every night.
 - tojo copies the restic repository offsite every morning.
 
 ## Monitoring
