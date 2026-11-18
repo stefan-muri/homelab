@@ -1,0 +1,42 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: vaultwarden-db
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: 1GB
+  bootstrap:
+    initdb:
+      database: vaultwarden
+      owner: vaultwarden
+      secret:
+        name: vaultwarden-db
+  storage:
+    storageClass: local-path
+    size: 2Gi
+  affinity:
+    podAntiAffinityType: required
+  inheritedMetadata:
+    annotations:
+      k8up.io/backup: "false"
+  resources:
+    requests:
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: vaultwarden-db
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: vaultwarden-db
+  podMetricsEndpoints:
+    - port: metrics

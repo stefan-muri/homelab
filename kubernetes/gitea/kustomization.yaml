@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: gitea
 resources:
   - storage.yaml
+  - database.yaml
   - deployment.yaml
   - service.yaml
   - httproute-lan.yaml
@@ -10,6 +11,7 @@ resources:
   - mirror-sync.yaml
   - sealedsecret-gitea.yaml
   - sealedsecret-backup-repo.yaml
+  - sealedsecret-gitea-db.yaml
   - sealedsecret-mirror-sync.yaml
 configMapGenerator:
   - name: mirror-sync

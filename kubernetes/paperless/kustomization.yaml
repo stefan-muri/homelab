@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: paperless
 resources:
   - storage.yaml
+  - database.yaml
   - deployment.yaml
   - service.yaml
   - httproute.yaml
@@ -10,3 +11,4 @@ resources:
   - backup.yaml
   - sealedsecret-paperless-env.yaml
   - sealedsecret-backup-repo.yaml
+  - sealedsecret-paperless-db.yaml
