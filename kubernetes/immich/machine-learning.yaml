@@ -15,10 +15,10 @@ spec:
         app: immich-machine-learning
     spec:
       enableServiceLinks: false
-      # Not next to the library: it receives images over HTTP, and dojo has
-      # the faster CPU and the spare memory.
+      # Not next to the library: it receives images over HTTP, and mojo has
+      # the most spare memory.
       nodeSelector:
-        kubernetes.io/hostname: k3s-dojo
+        kubernetes.io/hostname: k3s-mojo
       containers:
         - name: immich-machine-learning
           image: ghcr.io/immich-app/immich-machine-learning:v3.4.1
@@ -45,7 +45,7 @@ spec:
           resources:
             requests:
               cpu: 100m
-              memory: 256Mi
+              memory: 1536Mi
             limits:
               memory: 3Gi
           volumeMounts:
