@@ -5,10 +5,11 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
-  instances: 1
+  instances: 2
   imageName: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
-  # A PDB on the only instance would block every node drain.
-  enablePDB: false
+  postgresql:
+    parameters:
+      max_slot_wal_keep_size: 1GB
   bootstrap:
     initdb:
       database: nextcloud
@@ -19,8 +20,7 @@ spec:
     storageClass: local-path
     size: 2Gi
   affinity:
-    nodeSelector:
-      kubernetes.io/hostname: k3s-dojo
+    podAntiAffinityType: required
   inheritedMetadata:
     annotations:
       k8up.io/backup: "false"
