@@ -2,3 +2,7 @@ monitoring:
   podMonitorEnabled: true
   grafanaDashboard:
     create: true
+
+resources:
+  requests:
+    memory: 128Mi

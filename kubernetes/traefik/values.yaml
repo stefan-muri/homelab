@@ -32,3 +32,7 @@ gateway:
         from: All
       certificateRefs:
         - name: wildcard-k8s-unterhaken-at-tls
+
+resources:
+  requests:
+    memory: 192Mi

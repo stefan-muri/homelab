@@ -67,7 +67,7 @@ prometheus:
     resources:
       requests:
         cpu: 100m
-        memory: 512Mi
+        memory: 1Gi
       limits:
         memory: 1536Mi
     storageSpec:
@@ -139,6 +139,9 @@ grafana:
   testFramework:
     enabled: false
   sidecar:
+    resources:
+      requests:
+        memory: 96Mi
     datasources:
       initDatasources: true
       watchMethod: LIST
@@ -152,11 +155,14 @@ grafana:
       reporting_enabled: false
       check_for_updates: false
       check_for_plugin_updates: false
-  nodeSelector:
-    kubernetes.io/hostname: k3s-dojo
   resources:
     requests:
       cpu: 20m
-      memory: 256Mi
-    limits:
       memory: 512Mi
+    limits:
+      memory: 768Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      memory: 96Mi
