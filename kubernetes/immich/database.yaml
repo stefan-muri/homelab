@@ -5,13 +5,13 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=false,Delete=false
 spec:
-  instances: 1
+  instances: 2
   imageName: ghcr.io/tensorchord/cloudnative-vectorchord:17.5-0.4.3
-  # A PDB on the only instance would block every node drain.
-  enablePDB: false
   postgresql:
     shared_preload_libraries:
       - vchord.so
+    parameters:
+      max_slot_wal_keep_size: 1GB
   bootstrap:
     initdb:
       database: immich
@@ -27,8 +27,7 @@ spec:
     storageClass: local-path
     size: 5Gi
   affinity:
-    nodeSelector:
-      kubernetes.io/hostname: k3s-tojo
+    podAntiAffinityType: required
   inheritedMetadata:
     annotations:
       k8up.io/backup: "false"
