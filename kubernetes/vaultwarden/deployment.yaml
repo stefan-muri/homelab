@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: vaultwarden
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -34,6 +34,13 @@ spec:
               value: CF-Connecting-IP
             - name: TZ
               value: Europe/Vienna
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-db
+                  key: password
+            - name: DATABASE_URL
+              value: postgresql://vaultwarden:$(DB_PASSWORD)@vaultwarden-db-rw:5432/vaultwarden
           ports:
             - name: http
               containerPort: 8080
