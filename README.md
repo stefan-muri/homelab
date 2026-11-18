@@ -13,9 +13,9 @@ Infrastructure as code for a three-node k3s cluster on Proxmox VE, managed with 
 
 | Host | Model | CPU | RAM | k3s VM |
 |---|---|---|---|---|
-| dojo | Lenovo ThinkCentre M910q | Intel Core i5-6600T | 16 GB | k3s-dojo, 2 vCPU, 10 GB |
-| tojo | HP ProDesk 600 G3 DM | Intel Core i3-7100T | 12 GB | k3s-tojo, 2 vCPU, 8 GB, GVT-g virtual GPU |
-| mojo | HP ProDesk 600 G4 DM | Intel Core i3-8100T | 8 GB | k3s-mojo, 2 vCPU, 4 GB |
+| dojo | Lenovo ThinkCentre M910q | Intel Core i5-6600T | 24 GB | k3s-dojo, 4 vCPU, 16 GB |
+| tojo | HP ProDesk 600 G3 DM | Intel Core i3-7100T | 24 GB | k3s-tojo, 4 vCPU, 16 GB, GVT-g virtual GPU |
+| mojo | HP ProDesk 600 G4 DM | Intel Core i3-8100T | 24 GB | k3s-mojo, 4 vCPU, 16 GB |
 
 The three hosts form one Proxmox VE cluster. Besides the k3s VMs, dojo runs one LXC container for game servers. The hosts and that container are managed in a separate repository. tojo also serves NFS for media and the photo library, and hosts the restic REST server for backups.
 

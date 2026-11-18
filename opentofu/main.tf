@@ -2,9 +2,9 @@ locals {
   gateway = "10.0.0.138"
 
   k3s_nodes = {
-    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 10240, gvt = null }
-    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 8192, gvt = "i915-GVTg_V5_4" }
-    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 4096, gvt = null }
+    dojo = { vm_id = 141, ip = "10.0.0.41", datastore = "local-zfs", memory = 16384, gvt = null }
+    tojo = { vm_id = 241, ip = "10.0.0.42", datastore = "tojo-data", memory = 16384, gvt = "i915-GVTg_V5_4" }
+    mojo = { vm_id = 341, ip = "10.0.0.43", datastore = "local-zfs", memory = 16384, gvt = null }
   }
 
   k3s_hosts = { for k, v in local.k3s_nodes : "k3s-${k}" => v.ip }
@@ -20,8 +20,10 @@ resource "proxmox_virtual_environment_vm" "k3s" {
   pool_id     = "k3s"
   description = "k3s node, managed by OpenTofu"
 
+  reboot_after_update = false
+
   cpu {
-    cores = 2
+    cores = 4
     type  = "host"
   }
 
