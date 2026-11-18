@@ -34,21 +34,26 @@ kind: PreBackupPod
 metadata:
   name: gitea-db
 spec:
-  backupCommand: sqlite3 /data/data/gitea.db .dump
+  backupCommand: pg_dump --clean --if-exists --no-owner
   fileExtension: .sql
   pod:
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
       containers:
-        - name: sqlite
-          image: keinos/sqlite3:3.54.1
-          args: ["sleep", "infinity"]
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: data
+        - name: pgdump
+          image: ghcr.io/cloudnative-pg/postgresql:18.7-minimal-trixie
+          command: ["sleep", "infinity"]
+          env:
+            - name: PGHOST
+              value: gitea-db-rw
+            - name: PGDATABASE
+              value: gitea
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-db
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-db
+                  key: password
