@@ -39,6 +39,16 @@ resource "proxmox_virtual_environment_vm" "k3s" {
     size         = 60
   }
 
+  disk {
+    datastore_id = each.value.datastore
+    interface    = "scsi1"
+    size         = 120
+    file_format  = "raw"
+    discard      = "on"
+    backup       = false
+    replicate    = false
+  }
+
   network_device {
     bridge = "vmbr0"
   }
