@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: databases
+spec:
+  groups:
+    - name: databases
+      rules:
+        - alert: PostgresReplicaNotStreaming
+          expr: max by (namespace) (cnpg_pg_replication_streaming_replicas) < 1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: The PostgreSQL primary in {{ $labels.namespace }} has had no streaming replica for 15 minutes.
+        - alert: PostgresReplicationLagging
+          expr: max by (namespace) (cnpg_pg_replication_lag) > 300
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: The PostgreSQL replica in {{ $labels.namespace }} is more than 5 minutes behind its primary.
