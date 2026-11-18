@@ -27,7 +27,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs, dojo runs one 
 - **Networking:** [Traefik](https://traefik.io/traefik) implements the Gateway API with two gateways, `internal` for the LAN and `public` for the tunnel. [cloudflared](https://github.com/cloudflare/cloudflared) connects the `public` gateway to Cloudflare. [cert-manager](https://cert-manager.io) issues a Let's Encrypt wildcard certificate via DNS-01.
 - **Secrets:** [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) keeps every Secret encrypted in Git.
 - **Storage and backups:** the k3s `local-path` provisioner for application data, static NFS volumes for media, and [k8up](https://k8up.io) for restic backups.
-- **Databases:** [CloudNativePG](https://cloudnative-pg.io) runs PostgreSQL for applications that need a database server.
+- **Databases:** [CloudNativePG](https://cloudnative-pg.io) runs PostgreSQL for applications that need a database server, with two instances per database on different nodes.
 - **Monitoring:** [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) with Prometheus, Alertmanager and Grafana.
 - **Devices:** the [Intel GPU device plugin](https://github.com/intel/intel-device-plugins-for-kubernetes) exposes the GVT-g virtual GPU for hardware transcoding.
 
@@ -96,7 +96,8 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 
 ## Storage and backups
 
-- Application configuration and databases use `local-path` volumes, pinned to one node.
+- Application configuration uses `local-path` volumes, pinned to one node.
+- Each PostgreSQL database runs a primary and a streaming replica on different nodes, each on its own `local-path` volume. If the primary fails, CloudNativePG promotes the replica. Applications connect through the `-rw` service, which follows the primary.
 - Media is mounted from the NFS server on tojo through static PersistentVolumes.
 - k8up backs up the `local-path` volumes every night to the restic REST server on tojo. Applications with a database also back up an SQL dump taken before each run: `sqlite3 .dump` for SQLite, `pg_dump` for PostgreSQL.
 - Retention is 14 daily, 8 weekly and 6 monthly snapshots. Prune and check run on Sundays.
@@ -108,7 +109,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 - Prometheus scrapes the cluster, Argo CD, cert-manager, k8up and Sealed Secrets.
 - Alertmanager sends alerts to Telegram.
 - The Watchdog alert pings a Healthchecks.io check, which notifies by email when alerting stops working.
-- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, node readiness and SealedSecrets.
+- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness and SealedSecrets.
 
 ## Secrets
 

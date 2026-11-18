@@ -59,4 +59,12 @@ tofu plan
 tofu apply
 ```
 
-Changing the memory of a k3s VM restarts it. Drain the node first and uncordon it afterwards.
+`reboot_after_update` is off, so `tofu apply` does not restart the VMs. Changes to memory or CPU stay pending in Proxmox until the VM restarts. Apply them one node at a time:
+
+```sh
+kubectl drain k3s-<node> --ignore-daemonsets --delete-emptydir-data
+qm reboot <vmid>
+kubectl uncordon k3s-<node>
+```
+
+Run `qm reboot` on the Proxmox host that runs the VM. Wait until the node is `Ready` before the uncordon. If the node runs a PostgreSQL primary, CloudNativePG first switches the primary to the replica on another node, so the drain waits for that.
