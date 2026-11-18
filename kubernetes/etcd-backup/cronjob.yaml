@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: etcd-snapshots
+spec:
+  schedule: "30 0 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            node-role.kubernetes.io/control-plane: "true"
+          containers:
+            - name: restic
+              image: restic/restic:0.19.1
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  restic backup --host etcd --tag etcd /snapshots &&
+                  restic forget --host etcd --tag etcd --group-by host,tags
+                  --keep-daily 14 --keep-weekly 8 --keep-monthly 6
+              env:
+                - name: REST_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-repo
+                      key: rest-user
+                - name: REST_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-repo
+                      key: rest-password
+                - name: RESTIC_REPOSITORY
+                  value: rest:http://$(REST_USER):$(REST_PASSWORD)@10.0.0.8:8000/k3s/
+                - name: RESTIC_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-repo
+                      key: repo-password
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: snapshots
+                  mountPath: /snapshots
+                  readOnly: true
+          volumes:
+            - name: snapshots
+              hostPath:
+                path: /var/lib/rancher/k3s/server/db/snapshots
+                type: Directory
