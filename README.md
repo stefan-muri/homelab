@@ -28,7 +28,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs, dojo runs one 
 - **Secrets:** [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) keeps every Secret encrypted in Git.
 - **Storage and backups:** [Longhorn](https://longhorn.io) for replicated application data, the k3s `local-path` provisioner for databases and the media applications, static NFS volumes for media, and [k8up](https://k8up.io) for restic backups.
 - **Databases:** [CloudNativePG](https://cloudnative-pg.io) runs PostgreSQL for applications that need a database server, with two instances per database on different nodes.
-- **Monitoring:** [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) with Prometheus, Alertmanager and Grafana.
+- **Monitoring:** [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack) with Prometheus, Alertmanager and Grafana. [Loki](https://grafana.com/oss/loki/) stores the logs, which [Alloy](https://grafana.com/oss/alloy/) collects from all pods together with the Kubernetes events.
 - **Devices:** the [Intel GPU device plugin](https://github.com/intel/intel-device-plugins-for-kubernetes) exposes the GVT-g virtual GPU for hardware transcoding.
 
 ### Applications
@@ -112,6 +112,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 - Alertmanager sends alerts to Telegram.
 - The Watchdog alert pings a Healthchecks.io check, which notifies by email when alerting stops working.
 - Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness and SealedSecrets.
+- Grafana opens on the Homelab dashboard, defined in `dashboard-homelab.yaml` in the same directory. It shows the cluster status, nodes, applications, databases, Longhorn volumes, backups, error logs and warning events. Loki keeps logs for 14 days.
 
 ## Secrets
 

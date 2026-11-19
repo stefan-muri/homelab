@@ -145,6 +145,10 @@ grafana:
     datasources:
       initDatasources: true
       watchMethod: LIST
+    dashboards:
+      folderAnnotation: grafana_folder
+      provider:
+        foldersFromFilesStructure: true
   admin:
     existingSecret: grafana-admin
   additionalDataSources:
@@ -156,6 +160,8 @@ grafana:
   grafana.ini:
     server:
       root_url: https://grafana.k8s.unterhaken.at
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/Homelab/homelab.json
     analytics:
       reporting_enabled: false
       check_for_updates: false
