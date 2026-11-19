@@ -1,0 +1,41 @@
+---
+- name: Longhorn prerequisites and data disk
+  hosts: k3s
+  become: true
+
+  tasks:
+    - name: Install open-iscsi
+      ansible.builtin.apt:
+        name: open-iscsi
+        state: present
+
+    - name: Load iscsi_tcp at boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/longhorn.conf
+        content: "iscsi_tcp\n"
+        mode: "0644"
+
+    - name: Load iscsi_tcp now
+      community.general.modprobe:
+        name: iscsi_tcp
+        state: present
+
+    - name: Start iscsid
+      ansible.builtin.systemd_service:
+        name: iscsid
+        enabled: true
+        state: started
+
+    - name: Create the filesystem on the data disk
+      community.general.filesystem:
+        dev: /dev/sdb
+        fstype: ext4
+        opts: -L longhorn
+
+    - name: Mount the data disk
+      ansible.posix.mount:
+        path: /var/lib/longhorn
+        src: LABEL=longhorn
+        fstype: ext4
+        opts: defaults,nofail
+        state: mounted
