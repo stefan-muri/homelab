@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: gitea
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -86,6 +86,6 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data
+            claimName: gitea-data
         - name: config
           emptyDir: {}
