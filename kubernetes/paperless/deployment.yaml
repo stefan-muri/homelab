@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: paperless
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -153,10 +153,10 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: data
+            claimName: paperless-data
         - name: media
           persistentVolumeClaim:
-            claimName: media
+            claimName: paperless-media
         - name: consume
           persistentVolumeClaim:
-            claimName: consume
+            claimName: paperless-consume
