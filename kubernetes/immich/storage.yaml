@@ -37,13 +37,13 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: model-cache
+  name: immich-model-cache
   annotations:
     k8up.io/backup: "false"
 spec:
   accessModes:
     - ReadWriteOnce
-  storageClassName: local-path
+  storageClassName: longhorn
   resources:
     requests:
       storage: 10Gi

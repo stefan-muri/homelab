@@ -15,10 +15,15 @@ spec:
         app: immich-machine-learning
     spec:
       enableServiceLinks: false
-      # Not next to the library: it receives images over HTTP, and mojo has
-      # the most spare memory.
-      nodeSelector:
-        kubernetes.io/hostname: k3s-mojo
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 30
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 30
       containers:
         - name: immich-machine-learning
           image: ghcr.io/immich-app/immich-machine-learning:v3.4.1
@@ -54,7 +59,7 @@ spec:
       volumes:
         - name: cache
           persistentVolumeClaim:
-            claimName: model-cache
+            claimName: immich-model-cache
 ---
 apiVersion: v1
 kind: Service
