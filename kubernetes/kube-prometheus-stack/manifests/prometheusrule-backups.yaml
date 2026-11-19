@@ -17,12 +17,21 @@ spec:
           annotations:
             summary: A k8up {{ $labels.jobType }} job in {{ $labels.namespace }} failed.
         - alert: K8upBackupMissing
-          # Jobs owned by a Backup, except the one that only runs the database dump.
+          # Volumes and the SQL dump run as separate jobs, and immich backs up only
+          # its dump. The older of the two must be recent.
           expr: |
-            time() - max by (namespace) (
-              kube_job_status_completion_time
-              * on (namespace, job_name)
-              kube_job_owner{owner_kind="Backup", job_name!~".+-prebackup"}
+            time() - min by (namespace) (
+              max by (namespace, kind) (
+                label_replace(
+                  label_replace(
+                    kube_job_status_completion_time
+                    * on (namespace, job_name) group_left ()
+                    kube_job_owner{owner_kind="Backup"},
+                    "kind", "volumes", "job_name", ".*"
+                  ),
+                  "kind", "dump", "job_name", ".+-prebackup"
+                )
+              )
             ) > 26 * 3600
           labels:
             severity: critical

@@ -153,7 +153,7 @@
               or label_replace(count(argocd_app_info{health_status="Healthy",sync_status="Synced"}), "stat", "apps-ok", "", "")
               or label_replace(count(argocd_app_info), "stat", "apps", "", "")
               or label_replace(count(ALERTS{alertstate="firing",alertname!~"Watchdog|InfoInhibitor"}), "stat", "alerts", "", "")
-              or label_replace(count(time() - max by (namespace) (kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup",job_name!~".+-prebackup"}) < 93600), "stat", "backups-ok", "", "")
+              or label_replace(count(time() - min by (namespace) (max by (namespace, kind) (label_replace(label_replace(kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup"}, "kind", "volumes", "job_name", ".*"), "kind", "dump", "job_name", ".+-prebackup"))) < 93600), "stat", "backups-ok", "", "")
               or label_replace(count(k8up_schedules_gauge), "stat", "backups", "", "")
               or label_replace(floor(min(certmanager_certificate_expiration_timestamp_seconds - time()) / 86400), "stat", "tls-days", "", "")
           template: |
