@@ -96,7 +96,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 
 ## Storage and backups
 
-- Vaultwarden, Gitea, Paperless, Nextcloud and integrac keep their data on Longhorn volumes with two replicas on different nodes. Longhorn uses a second virtual disk in each VM, mounted at `/var/lib/longhorn`. These applications are not pinned to a node: when a node fails, Longhorn releases the volume and the pod starts on another node after about two minutes.
+- Vaultwarden, Gitea, Paperless, Nextcloud, integrac and Grafana keep their data on Longhorn volumes with two replicas on different nodes. Longhorn uses a second virtual disk in each VM, mounted at `/var/lib/longhorn`. These applications are not pinned to a node: when a node fails, Longhorn releases the volume and the pod starts on another node after about two minutes.
 - The media applications (Jellyfin, Navidrome, qBittorrent, File Browser, Kavita) keep their configuration on `local-path` volumes on tojo, next to the NFS share they depend on.
 - Each PostgreSQL database runs a primary and a streaming replica on different nodes, each on its own `local-path` volume. If the primary fails, CloudNativePG promotes the replica. Applications connect through the `-rw` service, which follows the primary.
 - Media is mounted from the NFS server on tojo through static PersistentVolumes.

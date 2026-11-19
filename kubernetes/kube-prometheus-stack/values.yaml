@@ -138,6 +138,24 @@ alertmanager:
 grafana:
   testFramework:
     enabled: false
+  # As a StatefulSet, the old pod stops before the new one starts, which a
+  # Longhorn volume needs: it attaches to one node at a time.
+  persistence:
+    enabled: true
+    type: statefulset
+    storageClassName: longhorn
+    size: 1Gi
+  initChownData:
+    enabled: false
+  tolerations:
+    - key: node.kubernetes.io/not-ready
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 30
+    - key: node.kubernetes.io/unreachable
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 30
   sidecar:
     resources:
       requests:
