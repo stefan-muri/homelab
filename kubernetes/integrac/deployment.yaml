@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: nextcloud
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -103,10 +103,10 @@ spec:
       volumes:
         - name: html
           persistentVolumeClaim:
-            claimName: html
+            claimName: integrac-html
         - name: data
           persistentVolumeClaim:
-            claimName: data
+            claimName: integrac-data
         - name: config
           configMap:
             name: nextcloud-config
