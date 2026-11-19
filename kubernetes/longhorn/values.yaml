@@ -1,0 +1,23 @@
+preUpgradeChecker:
+  jobEnabled: false
+
+persistence:
+  defaultClass: false
+  defaultClassReplicaCount: 2
+  reclaimPolicy: Retain
+
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  defaultReplicaCount: 2
+  storageOverProvisioningPercentage: 200
+  storageMinimalAvailablePercentage: 15
+  storageReservedPercentageForDefaultDisk: 5
+  replicaAutoBalance: best-effort
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod
+
+longhornUI:
+  replicas: 1
+
+metrics:
+  serviceMonitor:
+    enabled: true
