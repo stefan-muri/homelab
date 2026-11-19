@@ -21,3 +21,14 @@ longhornUI:
 metrics:
   serviceMonitor:
     enabled: true
+
+# The chart restricts traffic between Longhorn components by default; this
+# admits Prometheus to the manager's metrics port.
+networkPolicies:
+  metricsScrapeSources:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: monitoring
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
