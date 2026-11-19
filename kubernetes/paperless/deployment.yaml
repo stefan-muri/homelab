@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: paperless
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -15,6 +15,15 @@ spec:
         app: paperless
     spec:
       enableServiceLinks: false
+      tolerations:
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 30
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoExecute
+          tolerationSeconds: 30
       initContainers:
         - name: broker
           image: valkey/valkey:9.1.3-alpine
