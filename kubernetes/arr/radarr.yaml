@@ -33,14 +33,21 @@ spec:
             preStop:
               sleep:
                 seconds: 5
+          # Allowed Hosts in the app's settings rejects requests to the pod IP.
           readinessProbe:
             httpGet:
               path: /ping
               port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
           livenessProbe:
             httpGet:
               path: /ping
               port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
             initialDelaySeconds: 60
           resources:
             requests:
