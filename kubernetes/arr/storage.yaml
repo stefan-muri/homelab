@@ -1,42 +1,5 @@
-# Downloads keep the path qBittorrent reports (/downloads), so Radarr and
-# Sonarr need no remote path mapping. The two exports are separate, so an
-# import copies the file into the library and then deletes the download.
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: arr-downloads
-spec:
-  capacity:
-    storage: 1Gi # required by the API, not enforced by NFS
-  accessModes:
-    - ReadWriteMany
-  persistentVolumeReclaimPolicy: Retain
-  storageClassName: ""
-  claimRef:
-    namespace: arr
-    name: downloads
-  mountOptions:
-    - nfsvers=4.2
-    - hard
-  nfs:
-    server: 10.0.0.8
-    path: /home/srv/downloads
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: downloads
-  annotations:
-    k8up.io/backup: "false"
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  volumeName: arr-downloads
-  resources:
-    requests:
-      storage: 1Gi
----
+# The whole media share in one mount, so Radarr and Sonarr can hardlink a
+# finished download from /media/downloads into the library while it seeds.
 apiVersion: v1
 kind: PersistentVolume
 metadata:

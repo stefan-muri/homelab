@@ -56,8 +56,6 @@ spec:
               mountPath: /database
             - name: media
               mountPath: /srv/media
-            - name: downloads
-              mountPath: /srv/downloads
             - name: tmp
               mountPath: /tmp
       volumes:
@@ -70,8 +68,5 @@ spec:
         - name: media
           persistentVolumeClaim:
             claimName: media
-        - name: downloads
-          persistentVolumeClaim:
-            claimName: downloads
         - name: tmp
           emptyDir: {}

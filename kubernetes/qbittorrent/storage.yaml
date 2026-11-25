@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: qbittorrent-downloads
+  name: qbittorrent-media-downloads
 spec:
   capacity:
     storage: 1Gi
@@ -17,7 +17,7 @@ spec:
     - hard
   nfs:
     server: 10.0.0.8
-    path: /home/srv/downloads
+    path: /home/srv/media/downloads
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -29,7 +29,7 @@ spec:
   accessModes:
     - ReadWriteMany
   storageClassName: ""
-  volumeName: qbittorrent-downloads
+  volumeName: qbittorrent-media-downloads
   resources:
     requests:
       storage: 1Gi

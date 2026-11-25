@@ -51,17 +51,12 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: downloads
-              mountPath: /downloads
             - name: media
               mountPath: /media
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: sonarr-config
-        - name: downloads
-          persistentVolumeClaim:
-            claimName: downloads
         - name: media
           persistentVolumeClaim:
             claimName: media
