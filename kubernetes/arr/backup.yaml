@@ -42,7 +42,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
       containers:
-        - name: sqlite
+        - name: prowlarr
           image: keinos/sqlite3:3.54.1
           args: ["sleep", "infinity"]
           volumeMounts:
@@ -66,7 +66,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
       containers:
-        - name: sqlite
+        - name: radarr
           image: keinos/sqlite3:3.54.1
           args: ["sleep", "infinity"]
           volumeMounts:
@@ -90,7 +90,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
       containers:
-        - name: sqlite
+        - name: sonarr
           image: keinos/sqlite3:3.54.1
           args: ["sleep", "infinity"]
           volumeMounts:
@@ -114,7 +114,7 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
       containers:
-        - name: sqlite
+        - name: seerr
           image: keinos/sqlite3:3.54.1
           args: ["sleep", "infinity"]
           volumeMounts:
