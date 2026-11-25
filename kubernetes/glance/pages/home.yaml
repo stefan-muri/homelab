@@ -82,19 +82,19 @@
             - title: Seerr
               url: https://seerr.k8s.unterhaken.at
               check-url: http://seerr.arr.svc.cluster.local/api/v1/status
-              icon: sh:seerr
+              icon: sh:seerr-light
             - title: Radarr
               url: https://radarr.k8s.unterhaken.at
               check-url: http://radarr.arr.svc.cluster.local/ping
-              icon: sh:radarr
+              icon: si:radarr
             - title: Sonarr
               url: https://sonarr.k8s.unterhaken.at
               check-url: http://sonarr.arr.svc.cluster.local/ping
-              icon: sh:sonarr
+              icon: si:sonarr
             - title: Prowlarr
               url: https://prowlarr.k8s.unterhaken.at
               check-url: http://prowlarr.arr.svc.cluster.local/ping
-              icon: sh:prowlarr
+              icon: sh:prowlarr-light
 
         - type: monitor
           cache: 1m
