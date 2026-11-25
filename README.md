@@ -42,6 +42,7 @@ The three hosts form one Proxmox VE cluster. Besides the k3s VMs, dojo runs one 
 | [Jellyfin](https://jellyfin.org) | Media server with Intel Quick Sync transcoding |
 | [kobser](https://github.com/kobsermusic/kobser), [Navidrome](https://www.navidrome.org) | Music downloader and music streaming server |
 | [qBittorrent](https://www.qbittorrent.org) | Torrent client, traffic routed through a [gluetun](https://github.com/qdm12/gluetun) WireGuard sidecar |
+| [Seerr](https://docs.seerr.dev), [Radarr](https://radarr.video), [Sonarr](https://sonarr.tv), [Prowlarr](https://prowlarr.com) | Requests from Jellyfin's search through the [Jellyfin Enhanced](https://github.com/n00bcodr/Jellyfin-Enhanced) plugin. Radarr and Sonarr search through Prowlarr, download with qBittorrent and import into the library |
 | [Paperless-ngx](https://docs.paperless-ngx.com) | Document archive with OCR, scans arrive from the printer over FTP |
 | [Nextcloud](https://nextcloud.com) | File sync and sharing, on PostgreSQL |
 | [Nextcloud](https://nextcloud.com), second instance | File sync, group folders and document editing for a small company, with its own database and backups |
@@ -97,7 +98,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 ## Storage and backups
 
 - Vaultwarden, Gitea, Paperless, Nextcloud, integrac and Grafana keep their data on Longhorn volumes with two replicas on different nodes. Longhorn uses a second virtual disk in each VM, mounted at `/var/lib/longhorn`. These applications are not pinned to a node: when a node fails, Longhorn releases the volume and the pod starts on another node after about two minutes.
-- The media applications (Jellyfin, Navidrome, qBittorrent, File Browser, Kavita) keep their configuration on `local-path` volumes on tojo, next to the NFS share they depend on.
+- The media applications (Jellyfin, Navidrome, qBittorrent, File Browser, Kavita, Seerr, Radarr, Sonarr, Prowlarr) keep their configuration on `local-path` volumes on tojo, next to the NFS share they depend on.
 - Each PostgreSQL database runs a primary and a streaming replica on different nodes, each on its own `local-path` volume. If the primary fails, CloudNativePG promotes the replica. Applications connect through the `-rw` service, which follows the primary.
 - Media is mounted from the NFS server on tojo through static PersistentVolumes.
 - k8up backs up the Longhorn and `local-path` volumes every night to the restic REST server on tojo. Applications with a database also back up an SQL dump taken before each run: `sqlite3 .dump` for SQLite, `pg_dump` for PostgreSQL.
@@ -111,7 +112,7 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 - Prometheus scrapes the cluster, Argo CD, cert-manager, k8up and Sealed Secrets.
 - Alertmanager sends alerts to Telegram.
 - The Watchdog alert pings a Healthchecks.io check, which notifies by email when alerting stops working.
-- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness and SealedSecrets.
+- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness, SealedSecrets and free space on the media disk.
 - Grafana opens on the Homelab dashboard, defined in `dashboard-homelab.yaml` in the same directory. It shows the cluster status, nodes, applications, databases, Longhorn volumes, backups, error logs and warning events. Loki keeps logs for 14 days.
 
 ## Secrets

@@ -1,0 +1,130 @@
+# Downloads keep the path qBittorrent reports (/downloads), so Radarr and
+# Sonarr need no remote path mapping. The two exports are separate, so an
+# import copies the file into the library and then deletes the download.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: arr-downloads
+spec:
+  capacity:
+    storage: 1Gi # required by the API, not enforced by NFS
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: arr
+    name: downloads
+  mountOptions:
+    - nfsvers=4.2
+    - hard
+  nfs:
+    server: 10.0.0.8
+    path: /home/srv/downloads
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: downloads
+  annotations:
+    k8up.io/backup: "false"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: arr-downloads
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: arr-media
+spec:
+  capacity:
+    storage: 1Gi # required by the API, not enforced by NFS
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  claimRef:
+    namespace: arr
+    name: media
+  mountOptions:
+    - nfsvers=4.2
+    - hard
+  nfs:
+    server: 10.0.0.8
+    path: /home/srv/media
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media
+  annotations:
+    k8up.io/backup: "false"
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: ""
+  volumeName: arr-media
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prowlarr-config
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radarr-config
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarr-config
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: seerr-config
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false,Delete=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi

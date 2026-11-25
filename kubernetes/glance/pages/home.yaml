@@ -79,6 +79,22 @@
               url: https://files.unterhaken.at
               check-url: http://filebrowser.filebrowser.svc.cluster.local/health
               icon: sh:file-browser-light
+            - title: Seerr
+              url: https://seerr.k8s.unterhaken.at
+              check-url: http://seerr.arr.svc.cluster.local/api/v1/status
+              icon: sh:seerr
+            - title: Radarr
+              url: https://radarr.k8s.unterhaken.at
+              check-url: http://radarr.arr.svc.cluster.local/ping
+              icon: sh:radarr
+            - title: Sonarr
+              url: https://sonarr.k8s.unterhaken.at
+              check-url: http://sonarr.arr.svc.cluster.local/ping
+              icon: sh:sonarr
+            - title: Prowlarr
+              url: https://prowlarr.k8s.unterhaken.at
+              check-url: http://prowlarr.arr.svc.cluster.local/ping
+              icon: sh:prowlarr
 
         - type: monitor
           cache: 1m

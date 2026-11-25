@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seerr
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: seerr
+  template:
+    metadata:
+      labels:
+        app: seerr
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k3s-tojo
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: seerr
+          image: ghcr.io/seerr-team/seerr:v3.5.2
+          env:
+            - name: TZ
+              value: Europe/Vienna
+          ports:
+            - name: http
+              containerPort: 5055
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /api/v1/status
+              port: http
+            initialDelaySeconds: 60
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /app/config
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: seerr-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seerr
+spec:
+  selector:
+    app: seerr
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
