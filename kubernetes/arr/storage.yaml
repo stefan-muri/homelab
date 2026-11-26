@@ -6,7 +6,7 @@ metadata:
   name: arr-media
 spec:
   capacity:
-    storage: 1Gi # required by the API, not enforced by NFS
+    storage: 1Gi  # required by the API, not enforced by NFS
   accessModes:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain

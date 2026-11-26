@@ -12,5 +12,5 @@ spec:
     - www.daelite.at
   rules:
     - backendRefs:
-      - name: daelite
-        port: 80
+        - name: daelite
+          port: 80

@@ -1,5 +1,5 @@
 ---
-- name: k3s cluster
+- name: K3s cluster
   hosts: k3s
   become: true
   roles:
