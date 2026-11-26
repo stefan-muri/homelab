@@ -4,9 +4,19 @@
     path: /var/lib/rancher/k3s/server/token
   register: k3s_token_file
 
+# All nodes, not only this run's: with --limit, a rebuilt node would otherwise
+# see no cluster and start a new one.
+- name: Check which nodes are already in a cluster
+  ansible.builtin.stat:
+    path: /var/lib/rancher/k3s/server/token
+  delegate_to: "{{ item }}"
+  loop: "{{ groups['k3s'] }}"
+  run_once: true
+  register: k3s_token_files
+
 - name: Work out the cluster state
   ansible.builtin.set_fact:
-    k3s_existing_servers: "{{ ansible_play_hosts | map('extract', hostvars) | selectattr('k3s_token_file.stat.exists') | map(attribute='inventory_hostname') | list }}"
+    k3s_existing_servers: "{{ k3s_token_files.results | selectattr('stat.exists') | map(attribute='item') | list }}"
 
 - name: Pick the seed server
   ansible.builtin.set_fact:
