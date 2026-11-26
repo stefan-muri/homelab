@@ -3,6 +3,9 @@
   "extends": ["config:recommended"],
   "timezone": "Europe/Vienna",
   "schedule": ["before 7am on monday"],
+  "automergeSchedule": ["after 6pm and before 10pm on monday"],
+  "platformAutomerge": false,
+  "pinDigests": true,
   "labels": ["updates"],
   "prConcurrentLimit": 10,
   "kubernetes": {
@@ -35,13 +38,50 @@
       "managerFilePatterns": ["/^kubernetes/.+\\.ya?ml$/"],
       "matchStrings": ["imageName: (?<depName>ghcr\\.io/cloudnative-pg/postgresql):(?<currentValue>\\S+)"],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^\\.github/workflows/.+\\.ya?ml$/"],
+      "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)(?: extractVersion=(?<extractVersion>\\S+))?\\s+\\w+: (?<currentValue>\\S+)"]
     }
   ],
   "packageRules": [
     {
+      "description": "Applications: minor, patch and digest updates are merged once CI passes.",
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "matchPackageNames": ["!ghcr.io/kobsermusic/kobser"],
-      "groupName": "routine updates"
+      "groupName": "routine updates",
+      "automerge": true
+    },
+    {
+      "description": "Platform components are reviewed by hand: Helm charts, OpenTofu providers, k3s, kube-vip, PostgreSQL and the GPU plugin.",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchDatasources": ["helm"],
+      "groupName": "platform updates",
+      "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchManagers": ["terraform"],
+      "groupName": "platform updates",
+      "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "matchPackageNames": ["k3s-io/k3s", "ghcr.io/kube-vip/kube-vip", "ghcr.io/cloudnative-pg/postgresql", "intel/intel-device-plugins-for-kubernetes"],
+      "groupName": "platform updates",
+      "automerge": false
+    },
+    {
+      "description": "A PostgreSQL major upgrade takes every database cluster offline and needs its own plan.",
+      "matchPackageNames": ["ghcr.io/cloudnative-pg/postgresql"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Regex managers have no digest to pin.",
+      "matchManagers": ["custom.regex"],
+      "pinDigests": false
     },
     {
       "matchPackageNames": ["/^lscr\\.io/linuxserver//"],
