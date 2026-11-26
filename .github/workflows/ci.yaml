@@ -1,0 +1,112 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # renovate: datasource=github-releases depName=helm/helm
+  HELM_VERSION: v4.3.2
+  # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize extractVersion=^kustomize/v(?<version>.+)$
+  KUSTOMIZE_VERSION: 5.8.3
+  # renovate: datasource=github-releases depName=yannh/kubeconform
+  KUBECONFORM_VERSION: v0.8.0
+  # renovate: datasource=github-releases depName=gitleaks/gitleaks
+  GITLEAKS_VERSION: v8.30.1
+  # renovate: datasource=github-releases depName=opentofu/opentofu extractVersion=^v(?<version>.+)$
+  TOFU_VERSION: 1.13.10
+  # renovate: datasource=npm depName=renovate
+  RENOVATE_VERSION: 45.1.0
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - run: pip install -r .github/requirements-ci.txt
+      - name: pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+        env:
+          SKIP: gitleaks
+      - name: yamllint
+        run: yamllint --strict .
+      - name: ansible-lint
+        working-directory: ansible
+        run: ansible-lint
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION#v}_linux_x64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin" gitleaks
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: gitleaks
+        run: gitleaks git --redact --no-banner --verbose .
+
+  manifests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.1.0
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - run: pip install -r .github/requirements-ci.txt
+      - uses: azure/setup-helm@v5.1.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Install kustomize and kubeconform
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin" kustomize
+          curl -sSfL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/bin" kubeconform
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Render and validate
+        run: python .github/scripts/manifests.py
+
+  opentofu:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: opentofu/setup-opentofu@v2.0.2
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+          tofu_wrapper: false
+      - run: tofu fmt -check -recursive -diff opentofu
+      - name: validate
+        run: |
+          for dir in opentofu opentofu/cloudflare; do
+            tofu -chdir="$dir" init -backend=false -input=false -no-color
+            tofu -chdir="$dir" validate -no-color
+          done
+
+  renovate-config:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: "24"
+      - run: npx --yes --package "renovate@${RENOVATE_VERSION}" -- renovate-config-validator --strict renovate.json
