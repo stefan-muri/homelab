@@ -168,4 +168,19 @@ While the node is out, etcd runs on two of three members. Avoid the backup windo
 
 8. Check that the node is Ready, that etcd lists three members with none a learner, and that `kubectl -n longhorn-system get nodes.longhorn.io` shows the node as schedulable.
 
-The node comes back empty. Pods and Longhorn replicas do not move back to it by themselves.
+9. Move workloads back. The node comes back empty, and neither Kubernetes nor Longhorn moves pods or replicas to it by themselves. Cordon the other two nodes, restart the workloads that are not pinned to a node one at a time, then uncordon:
+
+   ```sh
+   kubectl cordon k3s-dojo k3s-tojo
+   kubectl -n paperless rollout restart deployment paperless
+   kubectl -n paperless rollout status deployment paperless
+   kubectl uncordon k3s-dojo k3s-tojo
+   ```
+
+   Applications with a single replica are unavailable for one to two minutes each. For Longhorn, raise a volume to three replicas, wait until the new replica on the node is healthy, and set it back to two. Longhorn keeps the new replica.
+
+   ```sh
+   kubectl -n longhorn-system patch volumes.longhorn.io <volume> --type merge -p '{"spec":{"numberOfReplicas":3}}'
+   kubectl -n longhorn-system get replicas.longhorn.io -o wide | grep <volume>
+   kubectl -n longhorn-system patch volumes.longhorn.io <volume> --type merge -p '{"spec":{"numberOfReplicas":2}}'
+   ```
