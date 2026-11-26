@@ -1,6 +1,6 @@
 # Rebuild
 
-Building the cluster from scratch. Application data on `local-path` volumes is not restored by these steps.
+Building the cluster from scratch, or replacing a single node. Application data on `local-path` volumes is not restored by these steps.
 
 ## Prerequisites
 
@@ -81,3 +81,91 @@ The controller has generated its own key, and the SealedSecrets show `SYNCED Fal
    ```sh
    kubectl -n kube-system rollout restart deployment sealed-secrets-controller
    ```
+
+## Replacing a node
+
+Recreating one VM while the other two nodes keep running. The examples use k3s-mojo (VM 341, 10.0.0.43). Tested on 2026-11-26; it took about 15 minutes.
+
+k3s-mojo holds no `local-path` volumes. On the other nodes the root disk also holds `local-path` volumes (database instances, Prometheus, application configuration), which are lost with the VM.
+
+While the node is out, etcd runs on two of three members. Avoid the backup window (03:00–06:40). If the node is already lost, skip steps 2 to 4; this case has not been tested.
+
+1. Check the plan and take an etcd snapshot. `-target` keeps all other resources out of the run.
+
+   ```sh
+   cd opentofu
+   tofu plan -replace='proxmox_virtual_environment_vm.k3s["mojo"]' -target='proxmox_virtual_environment_vm.k3s["mojo"]'
+   cd ..
+   ssh debian@10.0.0.41 sudo k3s etcd-snapshot save --name pre-mojo-rebuild
+   ```
+
+   The plan must show `1 to add, 0 to change, 1 to destroy`.
+
+2. Move the Longhorn replicas off the node and wait until none is listed:
+
+   ```sh
+   kubectl -n longhorn-system patch nodes.longhorn.io k3s-mojo --type merge \
+     -p '{"spec":{"allowScheduling":false,"evictionRequested":true}}'
+   kubectl -n longhorn-system get replicas.longhorn.io -o wide | grep k3s-mojo
+   ```
+
+3. Drain the node. The eviction of the Longhorn instance manager is retried until its volumes have detached.
+
+   ```sh
+   kubectl drain k3s-mojo --ignore-daemonsets --delete-emptydir-data
+   ```
+
+4. Shut the VM down on the Proxmox host. It must be stopped before the node is deleted, otherwise k3s registers it again.
+
+   ```sh
+   qm shutdown 341 --timeout 180
+   ```
+
+5. Delete the node. k3s removes its etcd member and node password Secret, and Longhorn removes its node object.
+
+   ```sh
+   kubectl delete node k3s-mojo
+   ```
+
+   Check that etcd has two members. `kubectl debug` prints the name of the pod:
+
+   ```sh
+   kubectl debug node/k3s-dojo --image=quay.io/coreos/etcd:v3.6.17 --profile=general -- \
+     etcdctl --endpoints=https://127.0.0.1:2379 \
+     --cacert=/host/var/lib/rancher/k3s/server/tls/etcd/server-ca.crt \
+     --cert=/host/var/lib/rancher/k3s/server/tls/etcd/client.crt \
+     --key=/host/var/lib/rancher/k3s/server/tls/etcd/client.key \
+     member list -w table
+   kubectl logs <pod>
+   kubectl delete pod <pod>
+   ```
+
+6. Recreate the VM:
+
+   ```sh
+   ssh-keygen -R 10.0.0.43
+   cd opentofu
+   tofu apply -replace='proxmox_virtual_environment_vm.k3s["mojo"]' -target='proxmox_virtual_environment_vm.k3s["mojo"]'
+   cd ..
+   ```
+
+   The apply waits for the QEMU guest agent, which the cloud image does not contain. In a second terminal, accept the new host key and wait for cloud-init, then start step 7. The apply completes once `base.yaml` has installed the agent.
+
+   ```sh
+   ssh debian@10.0.0.43 cloud-init status --wait
+   ```
+
+7. Configure the node and join it to the cluster. For k3s-tojo, run `gpu.yaml` and reboot before `k3s.yaml`, as in the full rebuild.
+
+   ```sh
+   cd ansible
+   ansible-playbook playbooks/base.yaml --limit k3s-mojo
+   ansible-playbook playbooks/longhorn.yaml --limit k3s-mojo
+   ansible-playbook playbooks/k3s.yaml --limit k3s-mojo
+   ```
+
+   `Show what Ansible decided` must report `cluster exists: True` and one of the other nodes as the seed.
+
+8. Check that the node is Ready, that etcd lists three members with none a learner, and that `kubectl -n longhorn-system get nodes.longhorn.io` shows the node as schedulable.
+
+The node comes back empty. Pods and Longhorn replicas do not move back to it by themselves.

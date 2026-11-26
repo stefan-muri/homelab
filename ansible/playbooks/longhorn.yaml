@@ -26,9 +26,10 @@
         enabled: true
         state: started
 
+    # sda and sdb swap between boots; on k3s-tojo the root disk is sdb.
     - name: Create the filesystem on the data disk
       community.general.filesystem:
-        dev: /dev/sdb
+        dev: /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1
         fstype: ext4
         opts: -L longhorn
 
