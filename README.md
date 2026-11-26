@@ -150,6 +150,7 @@ Everything runs at home except the following.
 
 | Document | Contents |
 |---|---|
-| [docs/rebuild.md](docs/rebuild.md) | Building the cluster from scratch |
+| [docs/rebuild.md](docs/rebuild.md) | Building the cluster from scratch or replacing a node |
+| [docs/recovery.md](docs/recovery.md) | Restoring application data from the backups |
 | [docs/secrets.md](docs/secrets.md) | Creating, changing and recovering Secrets |
 | [docs/opentofu.md](docs/opentofu.md) | State, credentials and setup on a new machine |
