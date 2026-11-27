@@ -702,7 +702,7 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "(1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * on (instance) group_left (nodename) node_uname_info",
+              "expr": "(1 - avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[$__rate_interval]))) * on (instance) group_left (nodename) node_uname_info{nodename=~\"k3s-.*\"}",
               "refId": "A",
               "legendFormat": "{{nodename}}",
               "range": true,
@@ -766,7 +766,7 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on (instance) group_left (nodename) node_uname_info",
+              "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * on (instance) group_left (nodename) node_uname_info{nodename=~\"k3s-.*\"}",
               "refId": "A",
               "legendFormat": "{{nodename}}",
               "range": true,
@@ -830,7 +830,7 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{device=~\"eth.*|ens.*|enp.*\"}[$__rate_interval]) * on (instance) group_left (nodename) node_uname_info)",
+              "expr": "sum by (nodename) (rate(node_network_receive_bytes_total{device=~\"eth.*|ens.*|enp.*\"}[$__rate_interval]) * on (instance) group_left (nodename) node_uname_info{nodename=~\"k3s-.*\"})",
               "refId": "A",
               "legendFormat": "{{nodename}} in",
               "range": true,
@@ -841,7 +841,7 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "-sum by (nodename) (rate(node_network_transmit_bytes_total{device=~\"eth.*|ens.*|enp.*\"}[$__rate_interval]) * on (instance) group_left (nodename) node_uname_info)",
+              "expr": "-sum by (nodename) (rate(node_network_transmit_bytes_total{device=~\"eth.*|ens.*|enp.*\"}[$__rate_interval]) * on (instance) group_left (nodename) node_uname_info{nodename=~\"k3s-.*\"})",
               "refId": "B",
               "legendFormat": "{{nodename}} out",
               "range": true,
@@ -904,7 +904,7 @@ data:
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "(1 - node_filesystem_avail_bytes{mountpoint=~\"/|/var/lib/longhorn\", fstype=\"ext4\"} / node_filesystem_size_bytes{mountpoint=~\"/|/var/lib/longhorn\", fstype=\"ext4\"}) * on (instance) group_left (nodename) node_uname_info",
+              "expr": "(1 - node_filesystem_avail_bytes{mountpoint=~\"/|/var/lib/longhorn\", fstype=\"ext4\"} / node_filesystem_size_bytes{mountpoint=~\"/|/var/lib/longhorn\", fstype=\"ext4\"}) * on (instance) group_left (nodename) node_uname_info{nodename=~\"k3s-.*\"}",
               "refId": "A",
               "legendFormat": "{{nodename}} {{mountpoint}}",
               "range": false,

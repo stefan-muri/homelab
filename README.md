@@ -109,10 +109,10 @@ Addresses below 10.0.0.100 are outside the DHCP range and assigned statically.
 
 ## Monitoring
 
-- Prometheus scrapes the cluster, Argo CD, cert-manager, k8up and Sealed Secrets.
+- Prometheus scrapes the cluster, Argo CD, cert-manager, k8up and Sealed Secrets, and the node exporter on each Proxmox host.
 - Alertmanager sends alerts to Telegram.
 - The Watchdog alert pings a Healthchecks.io check, which notifies by email when alerting stops working.
-- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness, SealedSecrets and free space on the media disk.
+- Additional alert rules in `kubernetes/kube-prometheus-stack/manifests/` cover certificates, Argo CD applications, backups, database replication, node readiness, SealedSecrets, free space on the media disk, and disk usage and ZFS pools on the hosts.
 - Grafana opens on the Homelab dashboard, defined in `dashboard-homelab.yaml` in the same directory. It shows the cluster status, nodes, applications, databases, Longhorn volumes, backups, error logs and warning events. Loki keeps logs for 14 days.
 
 ## Secrets

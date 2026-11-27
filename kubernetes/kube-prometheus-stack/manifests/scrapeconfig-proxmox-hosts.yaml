@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: proxmox-hosts
+spec:
+  # Same job as the VMs' node exporters, so the chart's node alerts and dashboards cover the hosts.
+  jobName: node-exporter
+  staticConfigs:
+    - targets: ["10.0.0.7:9100"]
+      labels:
+        instance: dojo
+    - targets: ["10.0.0.8:9100"]
+      labels:
+        instance: tojo
+    - targets: ["10.0.0.9:9100"]
+      labels:
+        instance: mojo
