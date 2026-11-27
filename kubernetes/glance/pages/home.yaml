@@ -172,6 +172,11 @@
               or label_replace(count(time() - min by (namespace) (max by (namespace, kind) (label_replace(label_replace(kube_job_status_completion_time * on (namespace, job_name) group_left () kube_job_owner{owner_kind="Backup"}, "kind", "volumes", "job_name", ".*"), "kind", "dump", "job_name", ".+-prebackup"))) < 93600), "stat", "backups-ok", "", "")
               or label_replace(count(k8up_schedules_gauge), "stat", "backups", "", "")
               or label_replace(floor(min(certmanager_certificate_expiration_timestamp_seconds - time()) / 86400), "stat", "tls-days", "", "")
+              or label_replace(count(up{job="node-exporter", instance=~"dojo|tojo|mojo"} == 1), "stat", "hosts-up", "", "")
+              or label_replace(count(up{job="node-exporter", instance=~"dojo|tojo|mojo"}), "stat", "hosts", "", "")
+              or label_replace(round(max(100 * (1 - node_filesystem_avail_bytes{job="node-exporter", fstype=~"ext4|xfs"} / node_filesystem_size_bytes{job="node-exporter", fstype=~"ext4|xfs"}))), "stat", "disk", "", "")
+              or label_replace(round(max(100 * zfs_pool_allocated_bytes / zfs_pool_size_bytes)), "stat", "zfs", "", "")
+              or label_replace(count(zfs_pool_healthy == 0) or vector(0), "stat", "zfs-bad", "", "")
           template: |
             {{ $s := "data.result.#(metric.stat==%q).value.1" }}
             {{ $nodesReady := .JSON.Int (printf $s "nodes-ready") }}
@@ -182,6 +187,11 @@
             {{ $backupsOk := .JSON.Int (printf $s "backups-ok") }}
             {{ $backups := .JSON.Int (printf $s "backups") }}
             {{ $tlsDays := .JSON.Int (printf $s "tls-days") }}
+            {{ $hostsUp := .JSON.Int (printf $s "hosts-up") }}
+            {{ $hosts := .JSON.Int (printf $s "hosts") }}
+            {{ $disk := .JSON.Int (printf $s "disk") }}
+            {{ $zfs := .JSON.Int (printf $s "zfs") }}
+            {{ $zfsBad := .JSON.Int (printf $s "zfs-bad") }}
             <div class="stat-grid">
               <div class="{{ if eq $nodesReady $nodes }}stat-ok{{ else }}stat-bad{{ end }}">
                 <div class="stat-value">{{ $nodesReady }}<small>/{{ $nodes }}</small></div>
@@ -206,6 +216,18 @@
               <div class="{{ if ge $tlsDays 14 }}stat-ok{{ else }}stat-bad{{ end }}">
                 <div class="stat-value">{{ $tlsDays }}<small>d</small></div>
                 <div class="stat-label">TLS</div>
+              </div>
+              <div class="{{ if and (eq $hostsUp $hosts) (gt $hosts 0) }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $hostsUp }}<small>/{{ $hosts }}</small></div>
+                <div class="stat-label">Hosts</div>
+              </div>
+              <div class="{{ if lt $disk 85 }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $disk }}<small>%</small></div>
+                <div class="stat-label">Disk</div>
+              </div>
+              <div class="{{ if and (lt $zfs 80) (eq $zfsBad 0) }}stat-ok{{ else }}stat-bad{{ end }}">
+                <div class="stat-value">{{ $zfs }}<small>%</small></div>
+                <div class="stat-label">ZFS</div>
               </div>
             </div>
 

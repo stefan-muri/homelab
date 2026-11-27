@@ -194,6 +194,110 @@
                   url: http://10.0.0.9:27973
                   token: ${GLANCE_AGENT_TOKEN}
 
+            - type: custom-api
+              title: Host storage
+              cache: 1m
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: >-
+                  label_replace(label_replace(label_replace(up{job="node-exporter", instance=~"dojo|tojo|mojo"},
+                  "order", "1", "instance", "dojo"), "order", "2", "instance", "tojo"), "order", "3", "instance", "mojo")
+              subrequests:
+                zfs-pct:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * zfs_pool_allocated_bytes / zfs_pool_size_bytes)
+                zfs-used:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(zfs_pool_allocated_bytes / 2^30)
+                zfs-size:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(zfs_pool_size_bytes / 2^30)
+                zfs-health:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: zfs_pool_healthy
+                data-pct:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(100 * (1 - node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} / node_filesystem_size_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"}))
+                data-free:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} / 2^30)
+                data-size:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(node_filesystem_size_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} / 2^30)
+                data-grown:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round((node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} offset 1d - node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"}) / 2^30)
+                data-days:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: round(node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} / ((node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"} offset 1d - node_filesystem_avail_bytes{instance=~"dojo|tojo|mojo", mountpoint=~"/home|/mnt/pve/local-sata"}) > 2^29))
+                failed:
+                  url: ${PROMETHEUS_URL}/api/v1/query
+                  parameters:
+                    query: sum by (instance) (node_systemd_unit_state{instance=~"dojo|tojo|mojo", state="failed"})
+              template: |
+                {{ $zfsPct := .Subrequest "zfs-pct" }}
+                {{ $zfsUsed := .Subrequest "zfs-used" }}
+                {{ $zfsSize := .Subrequest "zfs-size" }}
+                {{ $zfsHealth := .Subrequest "zfs-health" }}
+                {{ $dataPct := .Subrequest "data-pct" }}
+                {{ $dataFree := .Subrequest "data-free" }}
+                {{ $dataSize := .Subrequest "data-size" }}
+                {{ $dataGrown := .Subrequest "data-grown" }}
+                {{ $dataDays := .Subrequest "data-days" }}
+                {{ $failedUnits := .Subrequest "failed" }}
+                <ul class="list list-gap-14">
+                  {{ range sortByString "metric.order" "asc" (.JSON.Array "data.result") }}
+                    {{ $host := .String "metric.instance" }}
+                    {{ $at := printf "data.result.#(metric.instance==%q)" $host }}
+                    {{ $failed := $failedUnits.JSON.Int (printf "%s.value.1" $at) }}
+                    <li>
+                      <div class="flex justify-between items-center">
+                        <div class="color-highlight size-h3">{{ $host }}</div>
+                        {{ if ne (.String "value.1") "1" }}<span class="color-negative">exporter down</span>
+                        {{ else if gt $failed 0 }}<span class="color-negative">{{ $failed }} failed systemd unit{{ if gt $failed 1 }}s{{ end }}</span>
+                        {{ else }}<span class="color-subdue size-h5">no failed units</span>{{ end }}
+                      </div>
+                      {{ if ne ($zfsPct.JSON.String (printf "%s.value.1" $at)) "" }}
+                        {{ $z := $zfsPct.JSON.Float (printf "%s.value.1" $at) }}
+                        {{ $health := $zfsHealth.JSON.String (printf "%s.metric.health" $at) }}
+                        <div class="margin-top-10">
+                          <div class="flex justify-between items-end size-h5">
+                            <div>ZFS {{ $zfsPct.JSON.String (printf "%s.metric.pool" $at) }}{{ if ne $health "ONLINE" }} <span class="color-negative">{{ $health }}</span>{{ end }}</div>
+                            <div class="color-highlight text-very-compact">{{ $zfsUsed.JSON.Int (printf "%s.value.1" $at) }} <span class="color-base">/</span> {{ $zfsSize.JSON.Int (printf "%s.value.1" $at) }} <span class="color-base">GiB</span> · {{ $z }} <span class="color-base">%</span></div>
+                          </div>
+                          <div class="progress-bar"><div class="progress-value{{ if ge $z 80.0 }} progress-value-notice{{ end }}" style="--percent: {{ $z }}"></div></div>
+                        </div>
+                      {{ end }}
+                      {{ if ne ($dataPct.JSON.String (printf "%s.value.1" $at)) "" }}
+                        {{ $d := $dataPct.JSON.Float (printf "%s.value.1" $at) }}
+                        {{ $days := $dataDays.JSON.Int (printf "%s.value.1" $at) }}
+                        {{ $grown := $dataGrown.JSON.String (printf "%s.value.1" $at) }}
+                        <div class="margin-top-10">
+                          <div class="flex justify-between items-end size-h5">
+                            <div>{{ $dataPct.JSON.String (printf "%s.metric.mountpoint" $at) }}</div>
+                            <div class="color-highlight text-very-compact">{{ $dataFree.JSON.Int (printf "%s.value.1" $at) }} <span class="color-base">GiB free of</span> {{ $dataSize.JSON.Int (printf "%s.value.1" $at) }} · {{ $d }} <span class="color-base">%</span></div>
+                          </div>
+                          <div class="progress-bar"><div class="progress-value{{ if ge $d 85.0 }} progress-value-notice{{ end }}" style="--percent: {{ $d }}"></div></div>
+                          <div class="size-h6 color-subdue margin-top-3">
+                            {{ if gt $days 0 }}+{{ $grown }} GiB in 24 h, full in about {{ $days }} days at that rate
+                            {{ else if ne $grown "" }}{{ $grown }} GiB in 24 h
+                            {{ else }}24 h trend from tomorrow{{ end }}
+                          </div>
+                        </div>
+                      {{ end }}
+                    </li>
+                  {{ end }}
+                </ul>
+
         - type: custom-api
           title: Argo CD
           title-url: https://argocd.k8s.unterhaken.at
