@@ -494,37 +494,55 @@
           cache: 1m
           url: ${PROMETHEUS_URL}/api/v1/query
           parameters:
-            query: cnpg_collector_postgres_version
+            query: max by (namespace, cluster, full) (cnpg_collector_postgres_version)
           subrequests:
             up:
               url: ${PROMETHEUS_URL}/api/v1/query
               parameters:
-                query: cnpg_collector_up
+                query: min by (namespace) (cnpg_collector_up)
             size:
               url: ${PROMETHEUS_URL}/api/v1/query
               parameters:
-                query: round(sum by (namespace) (cnpg_pg_database_size_bytes{datname!~"postgres|template.*"}) / 2^20)
+                query: round(max by (namespace) (sum by (namespace, pod) (cnpg_pg_database_size_bytes{datname!~"postgres|template.*"})) / 2^20)
             connections:
               url: ${PROMETHEUS_URL}/api/v1/query
               parameters:
-                query: sum by (namespace) (cnpg_backends_total)
+                query: sum by (namespace) (cnpg_backends_total and on (namespace, pod) (cnpg_pg_replication_in_recovery == 0))
+            primary:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: max by (namespace, node) ((cnpg_pg_replication_in_recovery == 0) * on (namespace, pod) group_left (node) kube_pod_info)
+            streaming:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: max by (namespace) (cnpg_pg_replication_streaming_replicas)
+            lag:
+              url: ${PROMETHEUS_URL}/api/v1/query
+              parameters:
+                query: round(max by (namespace) (cnpg_pg_replication_lag))
             start:
               url: ${PROMETHEUS_URL}/api/v1/query
               parameters:
-                query: floor(max by (namespace) (cnpg_pg_postmaster_start_time))
+                query: floor(max by (namespace) (cnpg_pg_postmaster_start_time and on (namespace, pod) (cnpg_pg_replication_in_recovery == 0)))
           template: |
             {{ $up := .Subrequest "up" }}
             {{ $size := .Subrequest "size" }}
             {{ $connections := .Subrequest "connections" }}
+            {{ $primary := .Subrequest "primary" }}
+            {{ $streaming := .Subrequest "streaming" }}
+            {{ $lag := .Subrequest "lag" }}
             {{ $start := .Subrequest "start" }}
-            <div class="size-h5 margin-bottom-10">CloudNativePG, one instance each on local-path</div>
+            <div class="size-h5 margin-bottom-10">CloudNativePG, a primary and a streaming replica each, on local-path</div>
             <ul class="list list-gap-14">
               {{ range sortByString "metric.cluster" "asc" (.JSON.Array "data.result") }}
-                {{ $q := printf "data.result.#(metric.namespace==%q).value.1" (.String "metric.namespace") }}
+                {{ $ns := .String "metric.namespace" }}
+                {{ $q := printf "data.result.#(metric.namespace==%q).value.1" $ns }}
                 {{ $isUp := eq ($up.JSON.Int $q) 1 }}
+                {{ $replicas := $streaming.JSON.Int $q }}
+                {{ $behind := $lag.JSON.Int $q }}
                 <li>
                   <div class="flex items-center gap-10">
-                    <span class="dot{{ if not $isUp }} dot-bad{{ end }}"></span>
+                    <span class="dot{{ if not $isUp }} dot-bad{{ else if or (lt $replicas 1) (gt $behind 300) }} dot-warn{{ end }}"></span>
                     <span class="color-highlight">{{ .String "metric.cluster" }}</span>
                     <span class="badge margin-left-auto">PG {{ .String "metric.full" }}</span>
                   </div>
@@ -532,6 +550,8 @@
                     <li>{{ $size.JSON.Int $q | formatNumber }} MiB</li>
                     {{ $conns := $connections.JSON.Int $q }}
                     <li>{{ $conns }} {{ if eq $conns 1 }}connection{{ else }}connections{{ end }}</li>
+                    <li>primary on {{ $primary.JSON.String (printf "data.result.#(metric.namespace==%q).metric.node" $ns) }}</li>
+                    <li>{{ if lt $replicas 1 }}<span class="color-negative">no replica</span>{{ else if gt $behind 0 }}replica {{ $behind }} s behind{{ else }}replica in sync{{ end }}</li>
                     <li>up <span {{ $start.JSON.String $q | parseRelativeTime "unix" }}></span></li>
                   </ul>
                 </li>
